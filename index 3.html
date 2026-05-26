@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis Operacional – DLCII Depósito Las Cruces</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#26313a;
+  --gold:#b8a77a;--gold2:#d4c49a;
+  --f1:#b8945f;--f2:#2f7f8f;--f3:#6f8f72;--f4:#766b8f;
+  --fp1:#fb7185;--fp2:#38bdf8;
+  --text:#e6edf3;--muted:#8b949e;--rad:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
+
+header{background:linear-gradient(135deg,#1c2128,#0d1117);border-bottom:2px solid var(--gold);padding:12px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;}
+.hl{display:flex;align-items:center;gap:14px;}
+.logo-img{height:50px;width:50px;object-fit:contain;border-radius:6px;}
+.ht .sub{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+.ht .main{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;letter-spacing:1px;text-transform:uppercase;line-height:1.1;}
+.ht .main span{color:var(--gold);}
+.ht .sm{font-size:11px;color:var(--muted);margin-top:2px;}
+.hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.upbtn{display:none !important;background:var(--gold);color:#0d1117;border:none;padding:7px 16px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.upbtn:hover{background:var(--gold2);}
+#fileInput{display:none;}
+.hrange{font-size:13px;font-weight:600;color:var(--gold);}
+.hdias{font-size:11px;color:var(--muted);}
+
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 24px;overflow-x:auto;}
+.tab{padding:10px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--gold);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab.tc{color:#766b8f;}
+.tab.tc.active{color:#766b8f;border-bottom-color:#766b8f;}
+
+.controls{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.cl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.bg{display:flex;gap:3px;flex-wrap:wrap;}
+.btn{background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.btn:hover{border-color:var(--gold);color:var(--gold);}
+.btn.active{background:var(--gold);border-color:var(--gold);color:#0d1117;}
+.btn.sp{border-color:#766b8f;color:#766b8f;}
+.btn.sp.active{background:#766b8f;color:#0d1117;}
+
+.errbanner{background:#2d1b1b;border:1px solid #b85c5c;border-radius:8px;padding:12px 16px;margin:12px 24px;font-size:13px;color:#fca5a5;display:none;}
+
+main{padding:16px 24px;}
+.tc-wrap{display:none;}
+.tc-wrap.active{display:block;}
+
+.krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:16px;}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:12px 14px;position:relative;overflow:hidden;}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kcard.c1::before{background:var(--gold);}
+.kcard.c2::before{background:var(--f1);}
+.kcard.c3::before{background:var(--fp1);}
+.kcard.c4::before{background:#d25f3b;}
+.kcard.c5::before{background:var(--f2);}
+.kcard.c6::before{background:var(--f3);}
+.kcard.c7::before{background:var(--f4);}
+.klbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px;}
+.kval{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;line-height:1;}
+.ku{font-size:11px;font-weight:500;color:var(--muted);margin-left:2px;}
+.ksub{font-size:10px;color:var(--muted);margin-top:2px;}
+.kbadge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-top:3px;}
+.bok{background:#1a3a1a;color:#6f8f72;}
+.bwarn{background:#3a2e00;color:#b8945f;}
+.bbad{background:#3a1a1a;color:#b85c5c;}
+
+.stitle{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-left:3px solid var(--gold);padding-left:10px;margin:18px 0 10px;}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:16px 18px;}
+.cc.full{grid-column:1/-1;}
+.cctitle{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.ccsub{font-size:10px;color:var(--muted);margin-bottom:10px;}
+.cw canvas{max-height:240px;}
+.cw.tall canvas{max-height:290px;}
+
+.ut{width:100%;border-collapse:collapse;margin-top:8px;}
+.ut td{padding:4px 0;vertical-align:middle;}
+.uname{font-size:11px;font-weight:600;color:var(--muted);width:48px;text-transform:uppercase;letter-spacing:.5px;}
+.ubg{background:var(--border);border-radius:4px;height:14px;width:100%;overflow:hidden;}
+.ufill{height:100%;border-radius:4px;transition:width .5s;}
+.upct{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;width:42px;text-align:right;padding-left:6px;}
+
+.br{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+.bd{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
+.bd-dot{width:8px;height:8px;border-radius:50%;}
+
+/* COMPARATIVO */
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.cpc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:14px;text-align:center;position:relative;}
+.cpc.best{border-color:#6f8f72;box-shadow:0 0 10px #6f8f7230;}
+.cpc.worst{border-color:#b85c5c;box-shadow:0 0 10px #b85c5c30;}
+.cpc-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;margin-bottom:8px;}
+.cpc-rank{position:absolute;top:8px;right:8px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.r1{background:#1a3a1a;color:#6f8f72;}
+.r2{background:#1a2a3a;color:#2f7f8f;}
+.r3{background:#3a1a1a;color:#b85c5c;}
+.cpc-metric{font-size:11px;color:var(--muted);margin:4px 0;}
+.cpc-metric strong{color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:14px;}
+.cpc-dev{margin-top:6px;font-size:10px;font-weight:600;}
+.diag{background:#0c1820;border:1px solid var(--f2);border-radius:var(--rad);padding:16px 20px;margin-top:14px;}
+.diagtitle{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--f2);margin-bottom:8px;}
+.diagtext{font-size:12px;color:#c9d1d9;line-height:1.75;}
+
+@media(max-width:740px){.cg{grid-template-columns:1fr;}.cc.full{grid-column:1;}.comp-grid{grid-template-columns:1fr;}main{padding:10px 12px;}}
+
+/* Ajustes finales solicitados */
+.logo-img{
+  display:block !important;
+  height:58px;
+  width:58px;
+  object-fit:contain;
+  border-radius:8px;
+  background:#000 !important;
+  padding:4px;
+  box-shadow:none !important;
+}
+
+/* Paleta ejecutiva industrial/minera: cobre suave, grafito y azul petróleo */
+:root{
+  --bg:#0b1116;
+  --surface:#141a20;
+  --border:#26313a;
+  --gold:#d69b36;
+  --gold2:#e7b356;
+  --f1:#d27a36;
+  --f2:#1e88a8;
+  --f3:#4caf68;
+  --f4:#8b7bd8;
+  --fp1:#00a6c8;
+  --fp2:#5f8ecf;
+  --text:#edf1f3;
+  --muted:#9aa7ad;
+}
+
+/* KPI más ejecutivo: menor peso visual y mejor jerarquía */
+.kcard{background:linear-gradient(180deg,#151c22,#11171d);box-shadow:0 8px 18px rgba(0,0,0,.16);}
+.klbl{font-size:9.5px;font-weight:500;letter-spacing:1px;color:#9aa7ad;}
+.kval{font-family:'Barlow',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.4px;line-height:1.08;}
+.ksub{font-size:9.5px;color:#8f9aa0;}
+.kprog{
+  display:block;
+  margin-top:7px;
+  font-family:'Barlow',sans-serif;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:.1px;
+  color:#aeb7bc;
+}
+.kdiff{
+  display:inline-block;
+  margin-top:4px;
+  font-family:'Barlow',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:.1px;
+}
+.btn.active{background:var(--gold);border-color:var(--gold);color:#10151a;}
+.btn.sp{border-color:#b8945f;color:#c8aa78;}
+.btn.sp.active{background:#b8945f;color:#10151a;}
+.tab.tc{color:#9f8fbd;}.tab.tc.active{color:#9f8fbd;border-bottom-color:#9f8fbd;}
+.cctitle{font-weight:600;letter-spacing:1px;}
+
+/* Fijación tipo Excel */
+.tabs{position:sticky;top:75px;z-index:180;}
+.controls{position:sticky;top:116px;z-index:175;}
+.tc-wrap.active > .krow:first-child{
+  position:sticky;
+  top:158px;
+  z-index:160;
+  background:var(--bg);
+  padding-top:8px;
+  padding-bottom:10px;
+  margin-top:-8px;
+  box-shadow:0 10px 18px rgba(0,0,0,.35);
+}
+
+
+
+/* ==========================================================
+   OPCIÓN 7 — NEURAL COMMAND CENTER / MODELO NUEVO
+   Cambio real de layout: sidebar, bento cards, fondo tecnológico
+   Mantiene lógica, IDs, gráficos, pestañas y carga de Excel.
+   ========================================================== */
+:root{
+  --bg:#050814;
+  --surface:#0b1020;
+  --surface2:#10182c;
+  --border:rgba(125,160,255,.18);
+  --gold:#00e5ff;
+  --gold2:#7c3aed;
+  --f1:#ffb000;
+  --f2:#00e5ff;
+  --f3:#22c55e;
+  --f4:#a78bfa;
+  --fp1:#ff4d8d;
+  --fp2:#38bdf8;
+  --text:#f7fbff;
+  --muted:#91a4c7;
+  --rad:22px;
+}
+html{scroll-behavior:smooth;}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(0,229,255,.18), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(124,58,237,.18), transparent 24%),
+    radial-gradient(circle at 65% 90%, rgba(255,77,141,.10), transparent 26%),
+    linear-gradient(135deg,#030611 0%,#07101f 42%,#060817 100%) !important;
+  color:var(--text);
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed; inset:0;
+  pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(circle at center, black, transparent 78%);
+  opacity:.45;
+  z-index:-2;
+}
+body::after{
+  content:'';
+  position:fixed; inset:-20%;
+  pointer-events:none;
+  background:conic-gradient(from 180deg at 50% 50%, transparent, rgba(0,229,255,.09), transparent, rgba(124,58,237,.08), transparent);
+  filter:blur(28px);
+  animation:neuralSpin 22s linear infinite;
+  z-index:-3;
+}
+@keyframes neuralSpin{to{transform:rotate(360deg)}}
+
+header{
+  height:82px;
+  padding:14px 26px 14px 24px !important;
+  background:rgba(5,8,20,.78) !important;
+  backdrop-filter:blur(18px) saturate(145%);
+  border-bottom:1px solid rgba(0,229,255,.24) !important;
+  box-shadow:0 18px 60px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.04);
+}
+.logo-img{
+  width:56px !important;height:56px !important;
+  border-radius:18px !important;
+  background:linear-gradient(135deg,#000,#121a2e) !important;
+  border:1px solid rgba(0,229,255,.32);
+  box-shadow:0 0 28px rgba(0,229,255,.18) !important;
+}
+.ht .sub{color:#00e5ff !important; letter-spacing:2.6px; font-size:10px;}
+.ht .main{font-size:28px !important; letter-spacing:.8px; text-shadow:0 0 22px rgba(0,229,255,.13);}
+.ht .main span{color:#ffb000 !important;}
+.ht .sm{color:#91a4c7 !important;}
+.upbtn{display:none !important;
+  border-radius:999px !important;
+  background:linear-gradient(135deg,#00e5ff,#7c3aed) !important;
+  color:white !important;
+  box-shadow:0 12px 28px rgba(0,229,255,.20);
+  border:1px solid rgba(255,255,255,.16) !important;
+}
+.hrange{color:#00e5ff !important;}
+.hdias{color:#91a4c7 !important;}
+
+/* Nuevo modelo: navegación lateral tipo command center */
+@media(min-width:900px){
+  .tabs{
+    position:fixed !important;
+    top:98px !important;
+    left:18px !important;
+    bottom:18px !important;
+    z-index:170 !important;
+    width:238px !important;
+    padding:16px 12px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    overflow:hidden !important;
+    background:rgba(8,13,28,.72) !important;
+    border:1px solid rgba(0,229,255,.18) !important;
+    border-radius:28px !important;
+    box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter:blur(20px) saturate(155%);
+  }
+  .tabs::before{
+    content:'MÓDULOS DE ANÁLISIS';
+    padding:2px 12px 10px;
+    font-size:10px;
+    color:#00e5ff;
+    letter-spacing:2px;
+    font-weight:700;
+    opacity:.9;
+  }
+  .tab{
+    width:100%;
+    padding:14px 14px !important;
+    border-radius:18px !important;
+    border:1px solid transparent !important;
+    border-bottom:none !important;
+    color:#9fb2d8 !important;
+    background:rgba(255,255,255,.025);
+    letter-spacing:.7px !important;
+    position:relative;
+  }
+  .tab::after{
+    content:''; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:7px; height:7px; border-radius:50%; background:#334155;
+  }
+  .tab:hover{background:rgba(0,229,255,.08); color:white !important; border-color:rgba(0,229,255,.18) !important;}
+  .tab.active{
+    background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(124,58,237,.22)) !important;
+    color:#fff !important;
+    border-color:rgba(0,229,255,.35) !important;
+    box-shadow:0 10px 28px rgba(0,229,255,.12), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .tab.active::after{background:#22c55e; box-shadow:0 0 15px #22c55e;}
+
+  .controls{
+    margin-left:274px !important;
+    position:sticky !important;
+    top:82px !important;
+    z-index:155 !important;
+    border:1px solid rgba(125,160,255,.14) !important;
+    border-radius:0 0 24px 24px !important;
+    background:rgba(7,12,26,.68) !important;
+    backdrop-filter:blur(16px);
+    padding:12px 22px !important;
+    box-shadow:0 18px 40px rgba(0,0,0,.22);
+  }
+  main{margin-left:274px !important; padding:22px 26px 34px 8px !important;}
+  .tc-wrap.active > .krow:first-child{position:relative !important; top:auto !important; background:transparent !important; box-shadow:none !important; padding:0 !important; margin:0 0 18px !important;}
+}
+
+.cl{color:#00e5ff !important; letter-spacing:1.8px !important;}
+.btn{
+  border-radius:999px !important;
+  background:rgba(255,255,255,.045) !important;
+  border:1px solid rgba(125,160,255,.18) !important;
+  color:#a9b8d8 !important;
+  padding:7px 14px !important;
+}
+.btn:hover{color:#fff !important; border-color:rgba(0,229,255,.45) !important; background:rgba(0,229,255,.10) !important;}
+.btn.active,.btn.sp.active{
+  background:linear-gradient(135deg,#00e5ff,#7c3aed) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+  box-shadow:0 10px 22px rgba(0,229,255,.16);
+}
+.btn.sp{border-color:rgba(255,176,0,.35) !important;color:#ffcf73 !important;}
+
+/* Bento KPI: menos tabla, más app premium */
+.krow{
+  display:grid !important;
+  grid-template-columns:repeat(12,1fr) !important;
+  gap:16px !important;
+}
+.kcard{
+  grid-column:span 3;
+  min-height:124px;
+  border-radius:26px !important;
+  padding:18px 20px !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.035)) !important;
+  border:1px solid rgba(125,160,255,.18) !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(18px) saturate(145%);
+}
+.kcard:nth-child(1){grid-column:span 4; min-height:150px;}
+.kcard:nth-child(2),.kcard:nth-child(3){grid-column:span 4; min-height:150px;}
+.kcard::before{
+  height:100% !important; width:4px !important; right:auto !important; bottom:0 !important;
+  background:linear-gradient(to bottom,#00e5ff,#7c3aed) !important;
+  box-shadow:0 0 25px rgba(0,229,255,.4);
+}
+.klbl{font-size:10px !important; color:#9fb2d8 !important; letter-spacing:1.5px !important;}
+.kval{
+  font-family:'Barlow Condensed',sans-serif !important;
+  font-size:36px !important;
+  font-weight:900 !important;
+  letter-spacing:.2px !important;
+  color:white !important;
+  text-shadow:0 0 24px rgba(0,229,255,.12);
+}
+.kcard:nth-child(1) .kval{font-size:46px !important; color:#ffb000 !important;}
+.ksub,.kprog{color:#91a4c7 !important;}
+.kdiff{font-weight:800 !important;}
+.kbadge{border-radius:999px !important; padding:4px 10px !important;}
+
+.stitle{
+  margin:26px 0 14px !important;
+  padding:0 0 0 14px !important;
+  color:#dbeafe !important;
+  border-left:4px solid #00e5ff !important;
+  font-size:13px !important;
+  letter-spacing:2px !important;
+}
+.cg{gap:18px !important;}
+.cc{
+  border-radius:28px !important;
+  padding:20px 22px !important;
+  background:linear-gradient(145deg,rgba(12,18,36,.86),rgba(10,14,27,.70)) !important;
+  border:1px solid rgba(125,160,255,.16) !important;
+  box-shadow:0 28px 70px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.055) !important;
+  backdrop-filter:blur(18px);
+  position:relative;
+  overflow:hidden;
+}
+.cc::before{
+  content:''; position:absolute; inset:0 0 auto 0; height:1px;
+  background:linear-gradient(90deg,transparent,#00e5ff,transparent);
+  opacity:.5;
+}
+.cctitle{font-size:14px !important; color:white !important; letter-spacing:1.3px !important;}
+.ccsub{color:#8fa1c4 !important; font-size:11px !important;}
+.cw canvas{filter:drop-shadow(0 12px 18px rgba(0,0,0,.20));}
+
+.ut .ubg{height:18px !important; background:rgba(255,255,255,.08) !important; border-radius:999px !important;}
+.ufill{border-radius:999px !important; box-shadow:0 0 18px rgba(0,229,255,.14);}
+.uname,.upct{color:#c9d7f2 !important;}
+.comp-grid{gap:16px !important;}
+.cpc,.diag{
+  border-radius:26px !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.03)) !important;
+  border:1px solid rgba(125,160,255,.16) !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.25) !important;
+  backdrop-filter:blur(16px);
+}
+.diag{border-color:rgba(0,229,255,.24) !important;}
+.diagtitle{color:#00e5ff !important;}
+.diagtext{color:#dbeafe !important;}
+.errbanner{border-radius:18px !important; background:rgba(127,29,29,.45) !important; backdrop-filter:blur(14px);}
+
+@media(max-width:1180px){.kcard,.kcard:nth-child(1),.kcard:nth-child(2),.kcard:nth-child(3){grid-column:span 6;}}
+@media(max-width:740px){
+  header{height:auto; flex-direction:column; align-items:flex-start; gap:10px;}
+  .tabs{position:sticky !important; top:0 !important; border-radius:0 !important;}
+  .controls{margin-left:0 !important; border-radius:0 !important;}
+  main{margin-left:0 !important; padding:12px !important;}
+  .krow{grid-template-columns:1fr !important;}
+  .kcard,.kcard:nth-child(1),.kcard:nth-child(2),.kcard:nth-child(3){grid-column:span 1;}
+  .kval,.kcard:nth-child(1) .kval{font-size:32px !important;}
+}
+
+
+/* Firma discreta solicitada */
+.dev-signature{
+  position:fixed;
+  right:18px;
+  bottom:12px;
+  z-index:260;
+  font-family:'Barlow',sans-serif;
+  font-size:10px;
+  line-height:1.35;
+  letter-spacing:.8px;
+  color:rgba(220,232,255,.42);
+  text-align:right;
+  pointer-events:none;
+  user-select:none;
+  text-transform:none;
+}
+.dev-signature strong{
+  display:block;
+  font-size:11px;
+  font-weight:600;
+  color:rgba(255,255,255,.50);
+}
+@media(max-width:740px){.dev-signature{font-size:9px;right:10px;bottom:8px;opacity:.45;}}
+
+
+
+/* Corrección de navegación: ningún elemento decorativo bloquea clics */
+body::before, body::after, .dev-signature { pointer-events:none !important; }
+.tab, .btn { user-select:none; }
+
+/* Ajuste solicitado: KPI principales en una sola corrida de 5 recuadros */
+#tc-main > .krow:first-child{
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:16px !important;
+  align-items:stretch !important;
+}
+#tc-main > .krow:first-child .kcard{
+  grid-column:auto !important;
+  min-height:150px !important;
+}
+#tc-main > .krow:first-child .kcard:nth-child(1),
+#tc-main > .krow:first-child .kcard:nth-child(2),
+#tc-main > .krow:first-child .kcard:nth-child(3){
+  grid-column:auto !important;
+}
+@media(max-width:1400px){
+  #tc-main > .krow:first-child{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media(max-width:900px){
+  #tc-main > .krow:first-child{grid-template-columns:1fr !important;}
+}
+
+
+
+/* =========================================================
+   CORRECCIÓN FINAL SOLICITADA: 5 KPI EN UNA SOLA CORRIDA
+   No se permite salto a segunda fila en escritorio.
+   ========================================================= */
+#tc-main > .krow:first-child{
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:10px !important;
+  width:100% !important;
+  max-width:100% !important;
+  align-items:stretch !important;
+  overflow:visible !important;
+}
+#tc-main > .krow:first-child .kcard,
+#tc-main > .krow:first-child .kcard:nth-child(1),
+#tc-main > .krow:first-child .kcard:nth-child(2),
+#tc-main > .krow:first-child .kcard:nth-child(3),
+#tc-main > .krow:first-child .kcard:nth-child(4),
+#tc-main > .krow:first-child .kcard:nth-child(5){
+  grid-column:auto !important;
+  min-width:0 !important;
+  min-height:128px !important;
+  padding:13px 14px !important;
+}
+#tc-main > .krow:first-child .klbl{
+  font-size:8.5px !important;
+  letter-spacing:1.25px !important;
+  white-space:normal !important;
+}
+#tc-main > .krow:first-child .kval,
+#tc-main > .krow:first-child .kcard:nth-child(1) .kval{
+  font-size:30px !important;
+  line-height:1 !important;
+}
+#tc-main > .krow:first-child .ksub,
+#tc-main > .krow:first-child .kprog,
+#tc-main > .krow:first-child .kdiff{
+  font-size:11px !important;
+  line-height:1.25 !important;
+}
+#tc-main > .krow:first-child .kbadge{
+  font-size:9px !important;
+  padding:3px 8px !important;
+}
+
+/* Anula reglas responsive anteriores que bajaban a 3+2 o 1 columna */
+@media(max-width:1400px){
+  #tc-main > .krow:first-child{grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:9px !important;}
+  #tc-main > .krow:first-child .kcard{padding:12px 12px !important; min-height:122px !important;}
+  #tc-main > .krow:first-child .kval,
+  #tc-main > .krow:first-child .kcard:nth-child(1) .kval{font-size:27px !important;}
+}
+@media(max-width:1180px){
+  #tc-main > .krow:first-child{grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:8px !important;}
+  #tc-main > .krow:first-child .kcard,
+  #tc-main > .krow:first-child .kcard:nth-child(1),
+  #tc-main > .krow:first-child .kcard:nth-child(2),
+  #tc-main > .krow:first-child .kcard:nth-child(3){grid-column:auto !important;}
+  #tc-main > .krow:first-child .klbl{font-size:7.8px !important; letter-spacing:.9px !important;}
+  #tc-main > .krow:first-child .kval,
+  #tc-main > .krow:first-child .kcard:nth-child(1) .kval{font-size:23px !important;}
+  #tc-main > .krow:first-child .ksub,
+  #tc-main > .krow:first-child .kprog,
+  #tc-main > .krow:first-child .kdiff{font-size:9.5px !important;}
+}
+@media(max-width:900px){
+  #tc-main > .krow:first-child{
+    grid-template-columns:repeat(5,minmax(116px,1fr)) !important;
+    overflow-x:auto !important;
+    padding-bottom:6px !important;
+  }
+}
+
+
+
+/* =========================================================
+   KPI FIJOS TIPO EXCEL - INMOVILIZAR PANELES
+   Mantiene los 5 recuadros principales visibles al hacer scroll.
+   ========================================================= */
+#tc-main > .krow:first-child{
+  position:sticky !important;
+  top:0px !important;
+  z-index:500 !important;
+  margin-bottom:18px !important;
+  padding:12px 0 14px 0 !important;
+  background:linear-gradient(180deg, rgba(3,10,18,.98), rgba(3,10,18,.90)) !important;
+  backdrop-filter:blur(14px) saturate(130%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(130%) !important;
+  border-bottom:1px solid rgba(80,190,255,.16) !important;
+  box-shadow:0 18px 30px rgba(0,0,0,.38), 0 0 30px rgba(0,170,255,.06) !important;
+}
+#tc-main > .krow:first-child::before{
+  content:'';
+  position:absolute;
+  left:-24px;
+  right:-24px;
+  top:0;
+  bottom:0;
+  background:linear-gradient(90deg, rgba(0,194,255,.04), rgba(126,87,255,.05), rgba(0,194,255,.03));
+  pointer-events:none;
+  z-index:-1;
+}
+@media(max-width:900px){
+  #tc-main > .krow:first-child{
+    top:0px !important;
+    overflow-x:auto !important;
+    scrollbar-width:thin;
+  }
+}
+
+
+/* KPI utilización cerámicos: pérdida estimada por baja utilización */
+#k-util-meta{
+  color:#b8945f !important;
+  margin-top:6px;
+  font-size:10px;
+  line-height:1.15;
+}
+#k-util-loss{
+  display:block;
+  margin-top:3px;
+  font-size:10.5px;
+  line-height:1.15;
+  white-space:nowrap;
+}
+@media(min-width:741px){
+  #tc-main > .krow:first-child .kcard.c6{min-width:0 !important;}
+}
+
+
+
+/* =========================================================
+   AJUSTE V18 SOLICITADO
+   - Pestaña Filtros Cerámicos: 4 KPI en una sola fila horizontal
+   - Botón período 19–25 MAY con violeta neón
+   ========================================================= */
+#tc-ceramico > .krow:first-child{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:12px !important;
+  width:100% !important;
+  max-width:100% !important;
+  align-items:stretch !important;
+  overflow:visible !important;
+  margin-bottom:18px !important;
+}
+#tc-ceramico > .krow:first-child .kcard,
+#tc-ceramico > .krow:first-child .kcard:nth-child(1),
+#tc-ceramico > .krow:first-child .kcard:nth-child(2),
+#tc-ceramico > .krow:first-child .kcard:nth-child(3),
+#tc-ceramico > .krow:first-child .kcard:nth-child(4){
+  grid-column:auto !important;
+  min-width:0 !important;
+  min-height:126px !important;
+  padding:14px 16px !important;
+}
+#tc-ceramico > .krow:first-child .klbl{
+  font-size:8.8px !important;
+  letter-spacing:1.15px !important;
+  white-space:normal !important;
+}
+#tc-ceramico > .krow:first-child .kval,
+#tc-ceramico > .krow:first-child .kcard:nth-child(1) .kval{
+  font-size:31px !important;
+  line-height:1 !important;
+}
+#tc-ceramico > .krow:first-child .ksub{
+  font-size:10.5px !important;
+  line-height:1.22 !important;
+}
+@media(max-width:1180px){
+  #tc-ceramico > .krow:first-child{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+  #tc-ceramico > .krow:first-child .kcard{
+    padding:12px 12px !important;
+    min-height:116px !important;
+  }
+  #tc-ceramico > .krow:first-child .kval,
+  #tc-ceramico > .krow:first-child .kcard:nth-child(1) .kval{
+    font-size:25px !important;
+  }
+  #tc-ceramico > .krow:first-child .klbl{font-size:7.8px !important;}
+  #tc-ceramico > .krow:first-child .ksub{font-size:9px !important;}
+}
+@media(max-width:900px){
+  #tc-ceramico > .krow:first-child{
+    grid-template-columns:repeat(4,minmax(120px,1fr)) !important;
+    overflow-x:auto !important;
+    padding-bottom:6px !important;
+  }
+}
+
+/* 19–25 MAY: violeta neón más visible */
+.btn.sp{
+  border-color:rgba(190,90,255,.62) !important;
+  color:#d8b4fe !important;
+  background:rgba(124,58,237,.12) !important;
+  box-shadow:inset 0 0 0 1px rgba(168,85,247,.10), 0 0 16px rgba(168,85,247,.10) !important;
+}
+.btn.sp:hover{
+  color:#fff !important;
+  border-color:rgba(216,180,254,.90) !important;
+  background:rgba(168,85,247,.20) !important;
+  box-shadow:0 0 22px rgba(168,85,247,.25) !important;
+}
+.btn.sp.active{
+  background:linear-gradient(135deg,#7c3aed,#c084fc,#22d3ee) !important;
+  color:#fff !important;
+  border-color:rgba(216,180,254,.85) !important;
+  box-shadow:0 0 28px rgba(168,85,247,.46), 0 0 55px rgba(34,211,238,.18) !important;
+}
+
+
+
+/* =========================================================
+   AJUSTE V19 SOLICITADO
+   - KPI cerámicos fijos al hacer scroll
+   - TPH + utilización por filtro en el mismo recuadro
+   - Botón 19–25 MAY en violeta sobrio de un solo tono
+   ========================================================= */
+#tc-ceramico > .krow:first-child{
+  position:sticky !important;
+  top:0px !important;
+  z-index:500 !important;
+  padding:12px 0 14px 0 !important;
+  background:linear-gradient(180deg, rgba(3,10,18,.98), rgba(3,10,18,.90)) !important;
+  backdrop-filter:blur(14px) saturate(130%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(130%) !important;
+  border-bottom:1px solid rgba(160,120,255,.16) !important;
+  box-shadow:0 18px 30px rgba(0,0,0,.38), 0 0 28px rgba(124,58,237,.08) !important;
+}
+#tc-ceramico > .krow:first-child::before{
+  content:'';
+  position:absolute;
+  left:-24px;
+  right:-24px;
+  top:0;
+  bottom:0;
+  background:linear-gradient(90deg, rgba(124,58,237,.035), rgba(80,190,255,.025));
+  pointer-events:none;
+  z-index:-1;
+}
+#tc-ceramico > .krow:first-child .ksub{
+  line-height:1.35 !important;
+}
+.kutil-line{
+  display:inline-block;
+  margin-top:4px;
+  color:#d8b4fe;
+  font-weight:700;
+  letter-spacing:.25px;
+}
+.btn.sp,
+.btn.sp:hover,
+.btn.sp.active{
+  background:#6d28d9 !important;
+  border-color:#8b5cf6 !important;
+  color:#f5f3ff !important;
+  box-shadow:0 0 10px rgba(139,92,246,.20) !important;
+}
+.btn.sp:hover{background:#7c3aed !important;}
+.btn.sp.active{background:#7c3aed !important; box-shadow:0 0 14px rgba(139,92,246,.28) !important;}
+@media(max-width:900px){
+  #tc-ceramico > .krow:first-child{
+    top:0px !important;
+    overflow-x:auto !important;
+    scrollbar-width:thin;
+  }
+}
+
+
+/* =========================================================
+   AJUSTE V22 SOLICITADO
+   - Botón 19–25 MAY sin morado permanente: solo morado al estar activo
+   - Firma de desarrollo movida al extremo inferior izquierdo
+   ========================================================= */
+.btn.sp{
+  background:rgba(255,255,255,.045) !important;
+  border-color:rgba(125,160,255,.18) !important;
+  color:#a9b8d8 !important;
+  box-shadow:none !important;
+}
+.btn.sp:hover{
+  color:#fff !important;
+  border-color:rgba(139,92,246,.55) !important;
+  background:rgba(139,92,246,.10) !important;
+  box-shadow:0 0 12px rgba(139,92,246,.14) !important;
+}
+.btn.sp.active{
+  background:#7c3aed !important;
+  border-color:#8b5cf6 !important;
+  color:#f5f3ff !important;
+  box-shadow:0 0 14px rgba(139,92,246,.28) !important;
+}
+.dev-signature{
+  left:18px !important;
+  right:auto !important;
+  text-align:left !important;
+}
+@media(max-width:740px){
+  .dev-signature{left:10px !important; right:auto !important;}
+}
+
+
+/* Ajuste operativo final: semana operacional martes-lunes y filtro líder elegante */
+canvas{transition:filter .2s ease;}
+.cpc.best::after{content:'Filtro líder';position:absolute;left:12px;top:8px;font-size:10px;color:#22c55e;letter-spacing:.8px;text-transform:uppercase;}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="hl">
+    <img class="logo-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QCMRXhpZgAATU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAWKgAwAEAAAAAQAAAWIAAAAA/8AAEQgBYgFiAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgMDBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAF//aAAwDAQACEQMRAD8A/fyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//Q/fyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//R/fyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//S/fyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//T/fyiiigAooooAKKKKACiiigAooooAKKKKACimnnFfKHiD9oPW9G17UtIi0q3kSxupoAzO4LCJyoJwepArmqVoU/jLjG59X/LR8tfHX/DSviD/oEWv/fT/wCNH/DSviD/AKBFr/30/wDjXN9fo9y/ZyPsX5aPlr46/wCGlfEH/QItf++n/wAaP+GlfEH/AECLX/vp/wDGj6/R7h7OR9i/LR8tfHX/AA0r4g/6BFr/AN9P/jR/w0r4g/6BFr/30/8AjR9fo9w9nI+xflo+Wvjr/hpXxB/0CLX/AL6f/Gj/AIaV8Qf9Ai1/76f/ABo+v0e4ezkfYvy0fLXx1/w0r4g/6BFr/wB9P/jR/wANK+IP+gRa/wDfT/40fX6PcPZyPsX5aPlr46/4aV8Qf9Ai1/76f/Gj/hpXxB/0CLX/AL6f/Gj6/R7h7OR9i/LR8tfHX/DSviD/AKBFr/30/wDjR/w0r4g/6BFr/wB9P/jR9fo9w9nI+xflo+Wvjr/hpXxB/wBAi1/76f8Axo/4aV8Qf9Ai1/76f/Gj6/R7h7OR9i/LR8tfHX/DSviD/oEWv/fT/wCNH/DSviD/AKBFr/30/wDjR9fo9w9nI+x6K5Xwbrs3ibwxp2vXESwyXsfmMikkA5IwM89q6nPX2rvTTs+5k0LRRRViCiiigAooooAKKKKACiiigAooooA//9T9/KKKKACiiigAooooAKKKKACiiigAooooAQdK/M3x3/yO3iD/ALCN3/6Oav0yHSvzN8d/8jt4g/7CN3/6OavCzL4EdVE5atfw/Hay6/psV9tNs91Csu84TYZFDbj2GM59qyKK+dTs7nUffsHhD4M3LiK2tdMlc/wrKhP5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AiR54JRMthiONxYnHTHOfaOtIBis4YWlF8yjqN1JPqeV/Ev4an4iw2EJ1H+zxYtI2fJ83fvAH99cYx715Wf2brox+U3ipymMbfspxgdsefjFfVBx3pACKU8LSm3KSBTktLnhngX4G6N4P1WPW7y8bVLyDJizGIo0JyN2zLEsAeCW4POM4NW/FPwiPiXxva+Mv7V+zfZmgbyPI358hg33/MGN2P7vHvXtGffg0Z9+BVrD0uXktoLnkRvGsiNG4yrAgj1B61478NfhRJ8PNRvLxdW+3R3kQjMfkeUQVbKnd5jA4GRjHfr6+0Z7UmOK1lCLak90K58tP+zdMbmW5i8TNE0jE/LaEEBjnGROKf8A8M5X/wD0Nsv/AIDN/wDH6+o6K5PqdHsae1kcv4S0B/DHh6y0GS6N61orKZiuwvli2SuWxjOOtdQeKKBzXalZWXQybCiiirEFFFFABRRRQAUUUUAFFFFABRRRQB//0P38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/0f38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/0v38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/0/38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/1P38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/1f38ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/2Q==" alt="Pucobre">
+    <div class="ht">
+      <div class="sub">ANÁLISIS OPERACIONAL</div>
+      <div class="main"><span>DLCII</span> Depósito Las Cruces</div>
+      <div class="sm">Planta Concentradora de Cobre · San José · Tierra Amarilla, Atacama · Chile</div>
+    </div>
+  </div>
+  <div class="hr">
+    <button type="button" class="upbtn" onclick="document.getElementById('fileInput').click()">⬆ Cargar Excel</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="loadExcel(event)">
+    <div class="hrange" id="hrange">Enero – Mayo 2026</div>
+    <div class="hdias" id="hdias">141 días con producción</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('main',this)">Principal</div>
+  <div class="tab" onclick="showTab('ceramico',this)">Filtros Cerámicos</div>
+  <div class="tab" onclick="showTab('agua',this)">Agua Recuperada</div>
+  <div class="tab tc" onclick="showTab('comp',this)">Análisis Comparativo F2·F3·F4</div>
+</div>
+
+<div class="controls">
+  <span class="cl">Período:</span>
+  <div class="bg">
+    <button type="button" class="btn active" onclick="setF('all',this)">TODOS</button>
+    <button type="button" class="btn" onclick="setF('enero',this)">ENE</button>
+    <button type="button" class="btn" onclick="setF('febrero',this)">FEB</button>
+    <button type="button" class="btn" onclick="setF('marzo',this)">MAR</button>
+    <button type="button" class="btn" onclick="setF('abril',this)">ABR</button>
+    <button type="button" class="btn" onclick="setF('mayo',this)">MAY</button>
+    <button type="button" class="btn sp" onclick="setF('operacional',this)" id="btn-operacional">SEMANA OPERACIONAL</button>
+  </div>
+</div>
+
+<div id="errbanner" class="errbanner"></div>
+
+<main>
+
+<!-- TAB PRINCIPAL -->
+<div id="tc-main" class="tc-wrap active">
+  <div class="krow">
+    <div class="kcard c1"><div class="klbl">Relave Filtrado Total</div><div class="kval" id="k-total" style="color:var(--gold)">—</div><div class="ksub">Acumulado período</div><div class="kprog" id="k-total-prog">Prog: —</div><div class="kdiff" id="k-total-diff">Dif: —</div></div>
+    <div class="kcard c2"><div class="klbl">Relave Filtrado Cerámico</div><div class="kval" id="k-cer" style="color:var(--f1)">—</div><div class="ksub">F1+F2+F3+F4</div><div class="kprog" id="k-cer-prog">Prog: —</div><div class="kdiff" id="k-cer-diff">Dif: —</div></div>
+    <div class="kcard c3"><div class="klbl">Relave Filtrado Prensa</div><div class="kval" id="k-pre" style="color:var(--fp1)">—</div><div class="ksub">FP1+FP2</div><div class="kprog" id="k-pre-prog">Prog: —</div><div class="kdiff" id="k-pre-diff">Dif: —</div></div>
+    <div class="kcard c4"><div class="klbl">Ciclos Prensa</div><div class="kval" id="k-cic" style="color:#d25f3b">—</div><div class="ksub" id="k-cic-sub">—</div><div class="kprog" id="k-cic-prog">Prog: —</div><div class="kdiff" id="k-cic-diff">Dif: —</div></div>
+    <div class="kcard c6"><div class="klbl">Utilización Cerámicos</div><div class="kval" id="k-util" style="color:var(--f3)">—</div><div id="k-util-badge" class="kbadge">—</div><div class="kprog" id="k-util-meta">Meta: 83%</div><div class="kdiff" id="k-util-loss">Pérdida: —</div></div>
+  </div>
+  <div style="display:none" aria-hidden="true"><span id="k-agua"></span><span id="k-best"></span><span id="k-best-sub"></span></div>
+
+  <div class="stitle">📊 Tonelaje Filtrado</div>
+  <div class="cg">
+    <div class="cc full">
+      <div class="cctitle">Tonelaje Diario — Cerámico + Prensa vs Programado</div>
+      <div class="ccsub">Real consolidado en barra · Programado en línea · lectura gerencial avanzada</div>
+      <div class="cw tall"><canvas id="chMain"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Cerámico Real vs Programado</div>
+      <div class="ccsub">Toneladas mensuales · Real vs Programa</div>
+      <div class="cw"><canvas id="chCerProg"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Prensa Real vs Programado</div>
+      <div class="ccsub">Toneladas mensuales · Real vs Programa</div>
+      <div class="cw"><canvas id="chFPProg"></canvas></div>
+    </div>
+  </div>
+
+  <div class="stitle">🔄 Ciclos Filtros Prensa</div>
+  <div class="cg">
+    <div class="cc">
+      <div class="cctitle">Ciclos Prensa 1 — Real vs Programado</div>
+      <div class="ccsub">Vista diaria cuando se usa 19–25 MAY · Real en barra y programado en línea</div>
+      <div class="cw"><canvas id="chCiclos"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Ciclos Prensa 2 — Real vs Programado</div>
+      <div class="ccsub">Vista diaria cuando se usa 19–25 MAY · Real en barra y programado en línea</div>
+      <div class="cw"><canvas id="chCiclos2"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Estado de Utilización</div>
+      <div class="ccsub">Promedio período seleccionado · Objetivo ≥85%</div>
+      <table class="ut" id="utTable"></table>
+    </div>
+  </div>
+
+  <div class="stitle">⚙️ Control de Alimentación</div>
+  <div class="cg">
+    <div class="cc full">
+      <div class="cctitle">% Sólido Diario — Control de Alimentación</div>
+      <div class="ccsub">Línea diaria del porcentaje de sólido según período seleccionado · ubicado al final para priorizar resultados de tonelaje</div>
+      <div class="cw"><canvas id="chSolido"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB CERÁMICOS -->
+<div id="tc-ceramico" class="tc-wrap">
+  <div class="krow">
+    <div class="kcard c2"><div class="klbl">F1 Tonelaje</div><div class="kval" id="k-f1t" style="color:var(--f1)">—</div><div class="ksub" id="k-f1-tph">—</div></div>
+    <div class="kcard" style="border-top:3px solid var(--f2)"><div class="klbl">F2 Tonelaje</div><div class="kval" id="k-f2t" style="color:var(--f2)">—</div><div class="ksub" id="k-f2-tph">—</div></div>
+    <div class="kcard" style="border-top:3px solid var(--f3)"><div class="klbl">F3 Tonelaje</div><div class="kval" id="k-f3t" style="color:var(--f3)">—</div><div class="ksub" id="k-f3-tph">—</div></div>
+    <div class="kcard" style="border-top:3px solid var(--f4)"><div class="klbl">F4 Tonelaje</div><div class="kval" id="k-f4t" style="color:var(--f4)">—</div><div class="ksub" id="k-f4-tph">—</div></div>
+  </div>
+  <div class="cg">
+    <div class="cc full">
+      <div class="cctitle">Tonelaje Filtrado Diario por Filtro Cerámico</div>
+      <div class="ccsub">Toneladas filtradas por día F1–F4</div>
+      <div class="cw tall"><canvas id="chTPH"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Tasa de Filtrado por Filtro</div>
+      <div class="ccsub">Toneladas filtradas / horas efectivas de operación. Si no hay horas efectivas, se usa TPH diario disponible del Excel.</div>
+      <div class="cw"><canvas id="chFMens"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Utilización por Filtro</div>
+      <div class="ccsub">% utilización diaria en filtro especial · mensual en otros períodos</div>
+      <div class="cw"><canvas id="chUtilMens"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB AGUA -->
+<div id="tc-agua" class="tc-wrap">
+  <div class="cg">
+    <div class="cc full">
+      <div class="cctitle">Agua Recuperada Diaria — F1/F2/F3/F4</div>
+      <div class="ccsub">m³ recuperados por día — áreas por filtro</div>
+      <div class="cw tall"><canvas id="chAguaD"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Agua Recuperada Mensual por Filtro</div>
+      <div class="ccsub">m³ totales mensuales F1–F4</div>
+      <div class="cw"><canvas id="chAguaM"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Distribución Agua Recuperada</div>
+      <div class="ccsub">Participación % por filtro en el período</div>
+      <div class="cw" style="display:flex;justify-content:center;height:220px"><canvas id="chAguaDona" style="max-height:220px;max-width:300px"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Envío de Agua — PSJ vs TLC</div>
+      <div class="ccsub">Destino mensual del agua (m³)</div>
+      <div class="cw"><canvas id="chEnvio"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB COMPARATIVO F2 F3 F4 -->
+<div id="tc-comp" class="tc-wrap">
+  <div class="stitle" style="border-color:#766b8f">🔬 Análisis Comparativo — Filtros Cerámicos F2 · F3 · F4</div>
+  <div class="comp-grid" id="compCards"></div>
+  <div class="cg">
+    <div class="cc">
+      <div class="cctitle">Tonelaje Acumulado F2·F3·F4</div>
+      <div class="ccsub">Total período seleccionado</div>
+      <div class="cw"><canvas id="chCTon"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">TPH Promedio F2·F3·F4</div>
+      <div class="ccsub">Toneladas/hora promedio período</div>
+      <div class="cw"><canvas id="chCTPH"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Agua Recuperada F2·F3·F4</div>
+      <div class="ccsub">m³ totales período seleccionado</div>
+      <div class="cw"><canvas id="chCAgua"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cctitle">Utilización F2·F3·F4</div>
+      <div class="ccsub">% promedio período · Línea objetivo 85%</div>
+      <div class="cw"><canvas id="chCUtil"></canvas></div>
+    </div>
+    <div class="cc full">
+      <div class="cctitle">TPH Diario F2·F3·F4 — Línea de Tiempo</div>
+      <div class="ccsub">Evolución diaria de rendimiento TPH por filtro</div>
+      <div class="cw tall"><canvas id="chCTPHD"></canvas></div>
+    </div>
+    <div class="cc full">
+      <div class="cctitle">Desviación vs Promedio F2·F3·F4 (%)</div>
+      <div class="ccsub">Qué tan por encima/debajo del promedio está cada filtro en cada métrica</div>
+      <div class="cw"><canvas id="chCDev"></canvas></div>
+    </div>
+  </div>
+  <div class="diag" id="diagBox"></div>
+</div>
+
+</main>
+
+<div class="dev-signature">Design &amp; Developed<strong>Mirko Malbran J.</strong></div>
+
+<script>
+// ═══════════════════════════════════
+// DATA
+// ═══════════════════════════════════
+let D = {"dates": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-18", "2026-04-19", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25"], "relave_total": [7550.0, 6710.0, 7245.0, 6696.0, 6802.0, 4768.0, 0.0, 2682.0, 7410.0, 7363.0, 7520.0, 6817.0, 6707.0, 4531.0, 6400.0, 5220.0, 4515.0, 4655.0, 4530.0, 3473.0, 3239.0, 1242.0, 5656.0, 4383.0, 4609.0, 3463.0, 3333.0, 2068.0, 899.0, 3438.0, 4220.0, 5984.0, 6731.0, 5967.0, 2054.0, 972.0, 4981.0, 3200.0, 5681.0, 5166.0, 5477.0, 2734.0, 5780.0, 6070.0, 6176.0, 6164.0, 6375.0, 3286.0, 6832.0, 3677.0, 3631.0, 5715.0, 5487.0, 6559.0, 5863.0, 4330.0, 4571.0, 6466.0, 7028.0, 6782.0, 6756.0, 5588.0, 1934.0, 5447.0, 6992.0, 5324.0, 4409.0, 3557.0, 3094.0, 7441.0, 3510.0, 5685.0, 7207.0, 4810.0, 6338.0, 5956.0, 5895.0, 4816.0, 1974.0, 7000.0, 7275.0, 6156.0, 4246.0, 6911.0, 5041.0, 5883.0, 6520.0, 5780.0, 5125.0, 4833.0, 2437.0, 4081.0, 2643.0, 2647.0, 2545.0, 4522.0, 5220.0, 2320.0, 5540.0, 5008.0, 5852.0, 6645.0, 3611.0, 933.0, 2323.0, 4302.0, 4355.0, 5265.0, 6742.0, 4180.0, 5279.0, 0.0, 3620.0, 6775.0, 6361.0, 6131.0, 5825.0, 5523.0, 2821.0, 6134.0, 5523.0, 5472.0, 5294.0, 5054.0, 4915.0, 3009.0, 6343.0, 7215.0, 5826.0, 5464.0, 5940.0, 5137.0, 1190.0, 5017.0, 5812.0, 4306.0, 4105.0, 6082.0, 4733.0, 1397.0, 6423.0, 5978.0, 6449.0, 3031.0, 0.0], "relave_ceramico": [5110.0, 3790.0, 4365.0, 3676.0, 4362.0, 2848.0, 0.0, 1822.0, 5310.0, 5223.0, 6180.0, 5857.0, 6307.0, 3991.0, 6400.0, 4640.0, 3555.0, 4315.0, 4130.0, 3473.0, 3099.0, 1142.0, 5056.0, 3763.0, 3809.0, 2823.0, 2013.0, 1068.0, 599.0, 2158.0, 2400.0, 4084.0, 4511.0, 3947.0, 1574.0, 532.0, 4021.0, 2000.0, 3701.0, 3406.0, 3537.0, 1594.0, 3940.0, 5190.0, 6176.0, 6164.0, 4795.0, 2446.0, 5032.0, 2677.0, 2911.0, 4575.0, 4927.0, 4939.0, 3983.0, 3730.0, 3731.0, 4266.0, 4608.0, 3842.0, 4496.0, 3208.0, 1614.0, 4167.0, 4732.0, 4064.0, 2829.0, 2217.0, 2134.0, 5301.0, 3190.0, 4565.0, 5187.0, 3050.0, 4698.0, 5196.0, 5175.0, 3656.0, 754.0, 4540.0, 4775.0, 4976.0, 2526.0, 5251.0, 4101.0, 4223.0, 3940.0, 2900.0, 3305.0, 4333.0, 1497.0, 3061.0, 2203.0, 2647.0, 2545.0, 2702.0, 3440.0, 1380.0, 3680.0, 3208.0, 4112.0, 4205.0, 2391.0, 673.0, 1683.0, 2922.0, 3035.0, 4225.0, 4262.0, 3420.0, 4419.0, 0.0, 1980.0, 5235.0, 4161.0, 4411.0, 3725.0, 2963.0, 1821.0, 3294.0, 3023.0, 3072.0, 3334.0, 3254.0, 3315.0, 1749.0, 4163.0, 4395.0, 4306.0, 3504.0, 3700.0, 3397.0, 1070.0, 4097.0, 4912.0, 3486.0, 3025.0, 3962.0, 2873.0, 1177.0, 4423.0, 4098.0, 4269.0, 1851.0, 0.0], "relave_prensa": [2440.0, 2920.0, 2880.0, 3020.0, 2440.0, 1920.0, 0.0, 860.0, 2100.0, 2140.0, 1340.0, 960.0, 400.0, 540.0, 0.0, 580.0, 960.0, 340.0, 400.0, 0.0, 140.0, 100.0, 600.0, 620.0, 800.0, 640.0, 1320.0, 1000.0, 300.0, 1280.0, 1820.0, 1900.0, 2220.0, 2020.0, 480.0, 440.0, 960.0, 1200.0, 1980.0, 1760.0, 1940.0, 1140.0, 1840.0, 880.0, 0.0, 0.0, 1580.0, 840.0, 1800.0, 1000.0, 720.0, 1140.0, 560.0, 1620.0, 1880.0, 600.0, 840.0, 2200.0, 2420.0, 2940.0, 2260.0, 2380.0, 320.0, 1280.0, 2260.0, 1260.0, 1580.0, 1340.0, 960.0, 2140.0, 320.0, 1120.0, 2020.0, 1760.0, 1640.0, 760.0, 720.0, 1160.0, 1220.0, 2460.0, 2500.0, 1180.0, 1720.0, 1660.0, 940.0, 1660.0, 2580.0, 2880.0, 1820.0, 500.0, 940.0, 1020.0, 440.0, 0.0, 0.0, 1820.0, 1780.0, 940.0, 1860.0, 1800.0, 1740.0, 2440.0, 1220.0, 260.0, 640.0, 1380.0, 1320.0, 1040.0, 2480.0, 760.0, 860.0, 0.0, 1640.0, 1540.0, 2200.0, 1720.0, 2100.0, 2560.0, 1000.0, 2840.0, 2500.0, 2400.0, 1960.0, 1800.0, 1600.0, 1260.0, 2180.0, 2820.0, 1520.0, 1960.0, 2240.0, 1740.0, 120.0, 920.0, 900.0, 820.0, 1080.0, 2120.0, 1860.0, 220.0, 2000.0, 1880.0, 2180.0, 1180.0, 0.0], "f1": [1159.9, 840.6, 1141.8, 919.8, 1062.1, 768.2, 0.0, 430.2, 1158.3, 1129.6, 1308.9, 1276.7, 1293.6, 925.2, 1618.7, 1186.1, 1118.2, 1366.1, 880.7, 639.6, 630.0, 101.6, 1325.8, 1077.1, 1107.3, 821.2, 656.1, 519.2, 154.9, 806.1, 638.1, 864.3, 958.5, 980.4, 459.7, 265.8, 1126.4, 393.9, 845.2, 779.6, 828.9, 409.7, 1013.9, 1161.0, 1299.6, 1438.8, 1054.6, 727.4, 1213.0, 513.7, 667.3, 965.5, 995.6, 1031.3, 661.8, 803.2, 771.4, 876.6, 1020.2, 727.8, 768.5, 685.3, 340.8, 827.3, 897.5, 773.0, 561.8, 423.0, 446.8, 921.2, 622.0, 943.4, 1048.0, 779.6, 754.9, 1056.7, 960.3, 556.8, 0.0, 976.1, 906.4, 936.9, 481.2, 1348.6, 706.6, 766.6, 697.4, 437.0, 550.3, 656.6, 275.0, 552.4, 367.9, 445.9, 530.8, 505.2, 543.4, 225.2, 842.4, 535.4, 783.0, 769.9, 460.0, 179.2, 115.7, 446.9, 375.6, 783.1, 751.1, 0.0, 0.0, 0.0, 0.0, 1592.4, 383.2, 1226.1, 1116.4, 793.7, 459.8, 799.0, 820.1, 733.7, 754.0, 821.0, 940.3, 482.5, 813.5, 1092.9, 792.8, 310.7, 883.5, 987.5, 244.4, 992.9, 1299.6, 904.7, 889.0, 1118.4, 950.3, 375.8, 1208.5, 839.9, 1283.1, 592.0, 0.0], "f2": [1237.4, 988.3, 1144.9, 1026.3, 1155.9, 532.9, 0.0, 352.6, 1427.0, 1319.6, 1533.7, 1430.3, 1652.9, 920.7, 1796.3, 617.5, 0.0, 269.6, 1059.7, 1023.1, 808.7, 358.1, 570.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 1096.3, 1221.6, 762.6, 0.0, 0.0, 228.6, 518.0, 1088.3, 1031.1, 0.0, 0.0, 280.4, 1285.3, 1292.5, 1959.7, 1223.0, 15.7, 1509.2, 607.6, 506.4, 1295.7, 1421.2, 1293.3, 947.0, 1042.6, 1010.9, 1243.2, 1171.7, 1000.5, 1238.1, 749.5, 407.5, 1034.8, 1475.0, 1018.7, 791.4, 611.4, 468.9, 1498.3, 890.3, 1182.4, 1227.0, 708.4, 857.6, 1386.2, 1318.6, 915.7, 0.0, 1230.0, 1241.8, 1334.2, 650.2, 1264.6, 998.9, 998.7, 1052.2, 643.4, 838.4, 1155.6, 414.7, 807.4, 566.8, 615.9, 548.3, 595.4, 919.7, 210.2, 1027.4, 702.2, 979.6, 507.1, 531.5, 80.8, 469.8, 771.0, 765.3, 984.3, 1047.1, 983.9, 1378.7, 0.0, 341.7, 864.8, 1088.3, 853.7, 735.2, 680.5, 424.3, 763.5, 640.7, 696.7, 848.8, 737.9, 646.8, 354.3, 962.9, 1038.7, 994.6, 838.3, 436.9, 863.2, 245.4, 833.3, 1134.1, 714.8, 743.4, 862.4, 566.3, 234.6, 938.2, 1172.7, 881.5, 331.7, 0.0], "f3": [1345.7, 941.0, 1055.8, 928.0, 1087.2, 542.9, 0.0, 499.5, 1238.7, 1265.0, 1570.7, 1467.9, 1517.7, 983.5, 1520.9, 1473.3, 1235.3, 1354.5, 1001.6, 764.6, 645.7, 384.1, 1380.9, 1227.9, 1268.0, 912.7, 744.2, 0.0, 213.0, 373.2, 773.1, 1004.5, 1062.6, 992.0, 505.0, 226.4, 1312.5, 588.2, 1049.6, 1007.3, 1168.1, 555.7, 1127.9, 1232.5, 1719.7, 842.0, 1245.3, 866.1, 1386.3, 623.0, 729.8, 1121.3, 1087.6, 1251.2, 1025.9, 826.4, 988.3, 971.2, 1022.7, 1042.4, 1125.6, 649.7, 370.9, 984.8, 1018.3, 991.0, 643.5, 475.1, 538.4, 1218.5, 777.6, 1039.6, 1266.4, 938.4, 1292.1, 1224.9, 1317.5, 1091.9, 146.4, 735.8, 1064.4, 1027.2, 530.3, 1064.4, 914.6, 984.1, 879.4, 596.3, 724.8, 934.8, 239.1, 641.7, 457.0, 588.8, 526.3, 575.4, 738.6, 399.3, 618.8, 689.4, 894.7, 1101.2, 522.5, 102.4, 423.8, 611.3, 751.7, 901.1, 936.3, 959.0, 839.3, 0.0, 617.9, 1027.3, 985.7, 861.8, 625.1, 492.6, 381.2, 660.7, 583.2, 620.7, 592.6, 666.6, 711.0, 365.8, 961.8, 945.6, 1008.5, 1061.3, 1021.8, 776.0, 200.8, 884.4, 937.5, 745.2, 611.1, 737.7, 382.8, 200.8, 843.8, 584.2, 790.4, 365.6, 0.0], "f4": [1367.0, 1020.1, 1022.5, 801.9, 1056.7, 1004.0, 0.0, 539.6, 1485.9, 1508.8, 1766.7, 1682.1, 1842.7, 1161.6, 1464.1, 1363.2, 1201.5, 1324.7, 1187.9, 1045.7, 1014.6, 298.2, 1778.5, 1458.0, 1433.7, 1089.1, 612.8, 548.8, 231.1, 978.6, 888.8, 1118.9, 1268.4, 1212.0, 609.3, 39.9, 1353.6, 500.0, 717.9, 588.0, 1540.0, 628.7, 1517.8, 1511.2, 1864.2, 1923.5, 1272.1, 836.8, 923.5, 932.7, 1007.5, 1192.5, 1422.6, 1363.2, 1348.2, 1057.8, 960.4, 1174.9, 1393.3, 1071.2, 1363.8, 1123.5, 460.7, 1320.1, 1341.2, 1281.3, 832.3, 707.5, 679.9, 1663.0, 900.2, 1399.7, 1645.6, 623.7, 1793.4, 1528.3, 1578.7, 1091.6, 607.6, 1598.1, 1562.5, 1677.8, 864.4, 1573.4, 1480.8, 1473.5, 1311.1, 1223.3, 1191.4, 1585.9, 485.1, 1059.4, 811.4, 996.5, 939.6, 1026.0, 1238.3, 545.3, 1191.4, 1281.0, 1454.7, 1826.8, 877.0, 310.6, 673.7, 1092.8, 1142.4, 1556.4, 1527.5, 1477.1, 2200.9, 0.0, 1020.4, 1750.5, 1703.7, 1469.5, 1248.4, 996.1, 555.7, 1070.8, 979.1, 1020.9, 1138.6, 1028.5, 1016.9, 546.4, 1424.7, 1317.9, 1510.2, 1293.7, 1357.7, 770.3, 379.3, 1386.4, 1540.8, 1121.4, 781.5, 1243.5, 973.7, 365.8, 1432.5, 1501.2, 1313.9, 561.7, 0.0], "ciclos_fp1": [50.0, 70.0, 84.0, 74.0, 53.0, 40.0, 0.0, 19.0, 57.0, 63.0, 58.0, 30.0, 8.0, 0.0, 0.0, 29.0, 12.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 29.0, 28.0, 15.0, 31.0, 51.0, 67.0, 57.0, 56.0, 4.0, 12.0, 24.0, 34.0, 53.0, 60.0, 60.0, 30.0, 32.0, 0.0, 0.0, 0.0, 44.0, 27.0, 56.0, 23.0, 25.0, 41.0, 1.0, 39.0, 53.0, 4.0, 0.0, 42.0, 74.0, 77.0, 45.0, 59.0, 8.0, 35.0, 66.0, 14.0, 44.0, 36.0, 24.0, 46.0, 16.0, 56.0, 66.0, 44.0, 42.0, 19.0, 0.0, 20.0, 32.0, 62.0, 56.0, 11.0, 47.0, 42.0, 22.0, 53.0, 57.0, 72.0, 54.0, 17.0, 25.0, 29.0, 11.0, 0.0, 0.0, 46.0, 47.0, 30.0, 35.0, 39.0, 62.0, 54.0, 30.0, 11.0, 17.0, 37.0, 28.0, 32.0, 68.0, 8.0, 25.0, 0.0, 36.0, 28.0, 44.0, 25.0, 60.0, 62.0, 20.0, 74.0, 51.0, 53.0, 39.0, 42.0, 33.0, 33.0, 60.0, 71.0, 25.0, 56.0, 66.0, 50.0, 2.0, 27.0, 20.0, 36.0, 30.0, 56.0, 35.0, 11.0, 42.0, 26.0, 43.0, 22.0, 0.0], "ciclos_fp2": [72.0, 76.0, 60.0, 77.0, 69.0, 56.0, 0.0, 24.0, 48.0, 44.0, 9.0, 18.0, 12.0, 27.0, 0.0, 0.0, 36.0, 17.0, 17.0, 0.0, 7.0, 5.0, 30.0, 31.0, 40.0, 24.0, 37.0, 22.0, 0.0, 33.0, 40.0, 28.0, 54.0, 45.0, 20.0, 10.0, 24.0, 26.0, 46.0, 28.0, 37.0, 27.0, 60.0, 44.0, 0.0, 0.0, 35.0, 15.0, 34.0, 27.0, 11.0, 16.0, 27.0, 42.0, 41.0, 26.0, 42.0, 68.0, 47.0, 70.0, 68.0, 60.0, 8.0, 29.0, 47.0, 49.0, 35.0, 31.0, 24.0, 61.0, 0.0, 0.0, 35.0, 44.0, 40.0, 19.0, 36.0, 38.0, 29.0, 61.0, 69.0, 48.0, 39.0, 41.0, 25.0, 30.0, 72.0, 72.0, 37.0, 8.0, 22.0, 22.0, 11.0, 0.0, 0.0, 45.0, 42.0, 17.0, 58.0, 51.0, 25.0, 68.0, 31.0, 2.0, 15.0, 32.0, 38.0, 20.0, 56.0, 30.0, 18.0, 0.0, 46.0, 49.0, 66.0, 61.0, 45.0, 66.0, 30.0, 68.0, 74.0, 67.0, 59.0, 48.0, 47.0, 30.0, 49.0, 70.0, 51.0, 42.0, 46.0, 37.0, 4.0, 19.0, 25.0, 5.0, 24.0, 50.0, 58.0, 0.0, 58.0, 68.0, 66.0, 37.0, 0.0], "meta_fp1": [72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 36.0, 72.0, 72.0, 72.0, 72.0, 36.0], "meta_fp2": [72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 72.0, 36.0, 72.0, 72.0, 72.0, 72.0, 36.0], "agua_f1": [594.8, 556.2, 620.0, 518.9, 585.2, 429.5, 0.0, 211.8, 545.2, 518.0, 577.5, 573.0, 644.2, 466.8, 861.0, 579.5, 597.0, 669.2, 451.3, 377.4, 272.2, 53.7, 667.1, 533.1, 558.0, 534.8, 567.8, 305.0, 154.0, 495.3, 474.6, 526.6, 531.9, 535.8, 238.8, 140.9, 510.8, 280.5, 470.8, 445.3, 441.8, 281.6, 612.3, 667.4, 616.2, 588.6, 573.2, 319.8, 557.8, 368.1, 371.9, 429.8, 440.3, 504.0, 337.0, 356.8, 486.7, 462.0, 478.0, 457.0, 382.1, 390.2, 187.4, 398.0, 470.4, 406.1, 398.5, 326.8, 304.8, 449.3, 418.6, 446.1, 564.9, 549.7, 439.7, 494.8, 415.4, 268.0, 0.0, 504.1, 448.4, 428.1, 306.2, 762.7, 450.4, 448.3, 407.3, 314.4, 308.7, 283.7, 167.2, 321.9, 302.6, 331.2, 348.0, 295.8, 295.4, 139.6, 427.7, 313.6, 412.5, 389.4, 267.6, 87.0, 72.5, 288.8, 247.2, 364.3, 341.5, 0.0, 0.0, 0.0, 0.0, 756.2, 182.8, 571.8, 578.0, 483.0, 261.3, 460.5, 502.4, 443.2, 412.6, 491.2, 529.0, 399.3, 426.1, 571.0, 374.2, 157.2, 396.2, 508.9, 98.6, 505.1, 607.0, 443.3, 413.0, 557.8, 611.0, 189.0, 612.0, 423.0, 637.0, 332.0, 0.0], "agua_f2": [636.8, 642.2, 622.2, 580.6, 636.3, 308.4, 0.0, 173.6, 669.7, 603.8, 676.6, 640.5, 822.9, 469.4, 954.7, 299.7, 0.0, 127.0, 543.0, 624.1, 349.5, 178.4, 293.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 72.0, 667.9, 677.7, 410.8, 0.0, 0.0, 85.0, 381.1, 599.6, 594.3, 0.0, 0.0, 163.3, 739.7, 603.6, 796.1, 638.7, 6.5, 698.5, 430.5, 296.7, 577.5, 625.0, 639.8, 484.0, 457.3, 636.7, 651.2, 553.9, 625.1, 618.9, 425.4, 224.0, 494.5, 773.0, 539.2, 560.0, 472.1, 320.7, 729.3, 598.4, 562.0, 663.0, 498.1, 522.8, 650.7, 573.0, 441.7, 0.0, 636.5, 614.4, 610.0, 437.7, 674.4, 639.3, 582.4, 616.0, 464.1, 469.6, 464.7, 252.2, 466.1, 464.8, 457.3, 381.5, 347.4, 505.9, 132.1, 521.6, 409.4, 521.9, 261.7, 308.4, 39.2, 233.8, 499.3, 495.5, 456.0, 475.8, 503.2, 494.3, 0.0, 187.3, 410.2, 511.3, 405.0, 381.1, 413.8, 238.0, 440.6, 392.4, 420.9, 463.9, 440.9, 362.1, 329.8, 479.4, 542.8, 438.8, 423.0, 221.6, 444.2, 99.0, 429.7, 530.8, 348.8, 337.3, 429.2, 364.0, 118.0, 470.0, 494.0, 439.0, 186.0, 0.0], "agua_f3": [690.7, 618.4, 574.9, 525.3, 597.0, 310.6, 0.0, 245.8, 582.1, 581.2, 693.1, 658.4, 756.1, 498.7, 808.6, 720.8, 659.8, 664.7, 513.4, 445.8, 279.1, 190.3, 693.4, 608.5, 643.0, 595.5, 642.6, 0.0, 214.2, 329.6, 574.3, 612.3, 589.9, 542.8, 262.4, 119.8, 578.7, 414.5, 578.9, 598.0, 628.0, 360.9, 680.2, 707.8, 813.8, 373.2, 669.5, 377.2, 637.5, 459.2, 407.7, 500.1, 483.0, 612.2, 525.7, 360.0, 641.5, 504.8, 483.0, 667.7, 566.6, 369.1, 203.9, 473.0, 534.3, 515.7, 455.1, 366.7, 367.5, 593.5, 521.6, 494.7, 682.1, 656.5, 854.4, 574.4, 572.1, 526.2, 91.8, 380.9, 526.7, 468.1, 345.8, 571.2, 585.3, 568.0, 512.2, 430.8, 405.9, 392.0, 145.4, 374.5, 375.7, 437.3, 366.4, 336.9, 404.1, 253.9, 319.7, 402.6, 475.9, 556.2, 305.7, 49.7, 210.9, 398.0, 486.9, 417.4, 424.8, 499.1, 307.6, 0.0, 357.4, 488.1, 463.9, 404.5, 322.8, 303.6, 213.2, 381.0, 357.7, 374.9, 323.5, 399.2, 397.2, 361.3, 476.1, 491.2, 443.6, 535.7, 412.6, 399.5, 81.0, 456.0, 438.1, 365.9, 282.0, 369.0, 246.0, 101.0, 425.0, 274.0, 393.0, 205.0, 0.0], "agua_f4": [702.9, 682.9, 552.5, 445.8, 580.0, 558.8, 0.0, 265.6, 699.1, 691.6, 779.4, 753.7, 918.0, 602.9, 777.0, 666.4, 639.8, 646.0, 609.3, 638.8, 438.4, 148.6, 891.8, 723.4, 726.3, 715.6, 495.8, 310.5, 232.1, 617.7, 658.7, 683.0, 704.6, 662.6, 316.5, 20.7, 612.3, 365.8, 372.4, 315.9, 829.7, 431.6, 912.2, 872.0, 886.2, 784.1, 669.4, 365.8, 418.7, 687.7, 551.1, 531.0, 629.0, 673.6, 690.2, 467.7, 804.2, 615.1, 658.2, 666.2, 683.6, 648.0, 253.2, 632.1, 703.4, 691.9, 589.9, 546.3, 463.8, 810.2, 604.4, 664.1, 885.0, 441.6, 1191.1, 715.5, 685.0, 526.5, 381.1, 828.9, 773.3, 766.3, 597.4, 846.4, 948.0, 859.4, 763.4, 882.7, 667.2, 609.5, 295.0, 633.4, 666.2, 740.2, 651.7, 600.7, 675.0, 348.1, 607.2, 750.8, 770.1, 920.6, 510.0, 150.8, 335.3, 710.5, 740.0, 719.0, 694.6, 770.8, 762.7, 0.0, 594.9, 831.6, 801.0, 691.0, 647.5, 604.4, 307.5, 618.3, 600.2, 616.4, 621.8, 615.7, 575.9, 481.1, 701.5, 687.1, 662.0, 652.8, 548.1, 396.9, 153.0, 696.8, 719.9, 549.3, 360.1, 619.9, 626.0, 184.0, 714.0, 647.0, 651.0, 315.0, 0.0], "agua_total": [2625.2, 2499.7, 2369.6, 2070.6, 2398.5, 1607.2, 0.0, 896.8, 2496.2, 2394.5, 2726.5, 2625.6, 3141.2, 2037.8, 3401.2, 2266.3, 1896.5, 2106.8, 2117.0, 2086.1, 1339.3, 571.0, 2546.1, 1865.1, 1927.3, 1846.0, 1706.1, 615.5, 600.4, 1442.7, 1779.7, 2489.8, 2504.0, 2152.0, 817.7, 281.3, 1786.9, 1441.9, 2021.7, 1953.5, 1899.5, 1074.1, 2368.1, 2986.9, 2919.7, 2542.1, 2550.8, 1069.4, 2312.6, 1945.5, 1627.4, 2038.4, 2177.2, 2429.5, 2037.0, 1641.8, 2569.1, 2233.0, 2173.1, 2416.1, 2251.2, 1832.7, 868.5, 1997.6, 2481.0, 2152.8, 2003.5, 1711.9, 1456.7, 2582.3, 2143.0, 2166.9, 2794.9, 2145.9, 3008.0, 2435.5, 2245.6, 1762.4, 472.9, 2350.5, 2362.7, 2272.5, 1687.2, 2854.8, 2623.0, 2458.1, 2299.0, 2091.9, 1851.4, 1749.9, 859.9, 1795.8, 1809.2, 1966.0, 1747.7, 1580.8, 1880.3, 873.7, 1876.2, 1876.4, 2180.4, 2127.9, 1391.7, 326.8, 852.5, 1896.6, 1969.6, 1956.6, 1936.8, 1773.0, 1564.6, 0.0, 1139.7, 2486.0, 1958.9, 2072.3, 1929.4, 1804.7, 1020.1, 1900.3, 1852.8, 1855.3, 1821.8, 1947.0, 1864.1, 1571.5, 2083.0, 2292.1, 1918.7, 1768.7, 1578.4, 1749.6, 431.6, 2087.6, 2295.8, 1707.2, 1392.3, 1976.0, 1847.0, 592.0, 2221.0, 1838.0, 2120.0, 1038.0, 0.0], "envio_psj": [3056.5, 4732.5, 4963.8, 4078.8, 5100.0, 4173.9, 1136.0, 2682.7, 3536.1, 5065.3, 4947.6, 4432.9, 4718.6, 3081.7, 5160.0, 5160.0, 3145.3, 3800.0, 4956.0, 3769.4, 2629.6, 4199.7, 4174.8, 4715.5, 3518.0, 4653.3, 4773.0, 2050.0, 1804.0, 1503.3, 4438.2, 4920.0, 4920.0, 4801.0, 3443.1, 2271.2, 3836.6, 2867.9, 4126.6, 4392.7, 3448.2, 3560.2, 4896.0, 4691.0, 4896.0, 4896.0, 3871.0, 843.9, 259.0, 409.5, 1940.2, 2127.8, 2293.3, 2323.3, 2564.2, 1928.6, 3587.1, 2360.3, 2308.0, 2592.0, 2592.0, 2597.0, 1546.9, 2347.0, 2207.3, 2388.8, 2480.6, 2495.3, 2004.3, 2556.0, 2984.3, 2640.0, 2640.0, 2640.0, 2640.0, 2522.2, 2343.0, 2325.0, 2350.0, 2350.0, 2348.3, 2297.7, 2495.0, 2520.0, 2520.0, 2520.0, 2520.0, 2520.0, 2520.0, 2358.3, 2346.3, 2326.5, 2336.2, 2176.5, 2403.3, 2348.4, 2445.0, 837.4, 2197.0, 2115.6, 2322.0, 3510.0, 2460.0, 957.6, 1925.9, 2741.0, 2485.0, 2483.2, 2500.8, 2465.8, 2625.0, 0.0, 2025.3, 2940.0, 2940.0, 2700.0, 2700.0, 2225.8, 2640.0, 2610.0, 2443.3, 2415.0, 2625.7, 2518.9, 2497.5, 2616.0, 2532.0, 2532.0, 2532.0, 2468.3, 2532.0, 2339.9, 3947.5, 2313.2, 2455.5, 4358.9, 3489.3, 2714.2, 2671.8, 2217.0, 2561.0, 2601.0, 2400.0, 1210.0, 0.0], "envio_tlc": [1989.3, 0.0, 0.0, 0.0, 0.0, 5217.7, 0.0, 0.0, 82.8, 0.0, 0.0, 356.1, 304.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 198.0, 0.0, 0.0, 0.0, 38.1, 0.0, 0.0, 0.0, 2307.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1379.4, 1393.0, 0.0, 205.0, 0.0, 0.0, 1025.0, 2109.0, 4620.7, 3377.7, 2760.3, 2266.7, 2522.7, 2555.7, 2505.5, 2812.8, 1504.2, 3931.4, 1684.0, 2496.0, 2496.0, 2443.5, 1829.5, 2319.5, 2375.7, 2502.5, 2570.3, 2544.7, 1580.2, 2234.5, 1966.7, 2320.0, 2320.0, 2532.0, 2532.0, 2517.2, 2300.0, 2441.2, 2467.5, 2467.5, 2465.8, 2441.2, 2493.8, 2544.0, 2544.0, 2544.0, 2544.0, 2544.0, 2544.0, 2528.9, 2489.2, 2456.5, 2424.8, 2631.2, 2450.0, 2415.0, 2431.5, 805.8, 2077.3, 2810.2, 2584.0, 1400.0, 1186.7, 842.3, 1750.2, 2433.6, 2248.3, 2246.8, 2262.6, 2230.9, 2085.0, 0.0, 2938.9, 2100.0, 2100.0, 2100.0, 2100.0, 1625.8, 2100.0, 2068.5, 2562.5, 2415.2, 2659.7, 2460.8, 2305.0, 2108.3, 2400.0, 2400.0, 2400.0, 1115.0, 2400.0, 3481.7, 2864.8, 2183.3, 2316.7, 183.3, 1340.1, 2110.0, 2126.7, 2192.0, 1794.0, 2019.0, 2448.0, 1131.0, 0.0], "prog_total": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5307.6, 5307.6, 5307.6, 4993.6, 6256.5, 3810.2, 7266.0, 7620.4, 7620.4, 7620.4, 7169.8, 6256.5, 3810.2, 6719.2, 7620.4, 7620.4, 7620.4, 7169.8, 6256.5, 3359.6, 7620.4, 7620.4, 7620.4, 7620.4, 3359.6], "prog_ceramico": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3387.6, 3387.6, 3387.6, 3073.6, 4336.5, 1890.2, 6306.0, 5700.4, 5700.4, 5700.4, 5249.8, 4336.5, 1890.2, 4799.2, 5700.4, 5700.4, 5700.4, 5249.8, 4336.5, 2399.6, 5700.4, 5700.4, 5700.4, 5700.4, 2399.6], "prog_prensa": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 960.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 1920.0, 960.0, 1920.0, 1920.0, 1920.0, 1920.0, 960.0], "util_f1": [90.42, 88.54, 94.03, 83.54, 90.0, 69.72, 0.0, 42.01, 85.56, 79.38, 85.21, 83.75, 85.0, 56.53, 105.21, 80.21, 86.39, 96.6, 67.92, 62.57, 42.01, 8.61, 91.74, 86.39, 93.26, 85.42, 90.56, 50.76, 26.46, 93.06, 92.92, 90.97, 87.78, 88.26, 43.26, 26.94, 92.71, 47.64, 86.88, 78.96, 67.85, 48.06, 93.4, 90.49, 90.9, 94.1, 89.51, 51.53, 91.32, 59.31, 56.67, 61.74, 73.12, 86.32, 57.85, 57.85, 86.18, 93.26, 83.96, 81.53, 77.99, 75.69, 30.07, 70.42, 74.17, 71.39, 72.36, 60.56, 51.04, 73.68, 77.36, 71.53, 90.83, 93.47, 76.74, 88.54, 71.25, 49.51, 0.0, 81.32, 85.35, 84.58, 58.82, 50.94, 90.35, 93.4, 88.82, 90.62, 84.58, 70.07, 40.07, 76.6, 74.03, 81.18, 61.74, 79.86, 71.67, 23.26, 94.1, 71.81, 92.71, 78.12, 61.94, 15.76, 22.71, 67.57, 62.15, 88.61, 83.68, 0.0, 0.0, 0.0, 0.0, 71.39, 17.71, 63.19, 84.24, 84.24, 41.87, 72.15, 76.46, 75.07, 77.15, 85.69, 84.44, 65.0, 61.04, 86.11, 75.42, 28.47, 59.93, 66.94, 11.74, 80.69, 85.56, 69.03, 61.46, 87.43, 87.5, 30.42, 86.25, 92.5, 90.83, 46.25, 0.0], "util_f2": [90.07, 92.15, 90.49, 84.24, 90.14, 45.21, 0.0, 31.81, 92.43, 79.44, 85.9, 80.49, 90.9, 55.56, 97.22, 43.06, 0.0, 17.64, 75.69, 89.03, 48.54, 26.32, 38.26, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.5, 87.36, 96.74, 57.99, 0.0, 0.0, 10.42, 53.61, 81.25, 79.03, 0.0, 0.0, 20.62, 81.11, 69.17, 96.25, 78.26, 0.97, 93.68, 57.5, 35.56, 68.75, 50.0, 80.35, 67.29, 52.78, 84.24, 93.33, 86.94, 86.88, 93.89, 67.43, 29.17, 64.24, 91.67, 75.14, 76.18, 68.12, 44.38, 93.4, 75.62, 71.81, 86.53, 66.25, 82.64, 87.85, 80.35, 65.0, 0.0, 83.06, 86.11, 86.04, 65.14, 90.28, 90.07, 80.49, 94.44, 90.35, 87.57, 84.38, 40.42, 75.76, 79.72, 82.92, 70.07, 64.86, 91.88, 24.03, 92.01, 71.32, 88.12, 43.4, 58.89, 7.43, 35.21, 87.36, 85.35, 84.1, 85.42, 86.25, 82.64, 0.0, 29.86, 70.28, 90.0, 80.69, 82.08, 82.99, 44.93, 85.76, 76.25, 81.04, 86.81, 86.6, 72.29, 64.93, 94.1, 93.4, 80.97, 87.43, 114.79, 94.1, 18.75, 81.6, 93.4, 64.44, 66.39, 81.74, 70.42, 28.33, 89.17, 86.25, 94.17, 39.58, 0.0], "util_f3": [94.44, 90.62, 91.04, 84.03, 93.75, 45.63, 0.0, 40.97, 81.46, 80.35, 93.61, 86.32, 86.6, 61.81, 90.69, 96.88, 86.6, 90.62, 74.31, 67.5, 41.53, 29.24, 92.85, 87.43, 92.08, 86.32, 92.99, 50.0, 34.65, 68.19, 90.49, 93.96, 91.25, 82.5, 40.49, 20.56, 89.24, 59.44, 87.43, 82.99, 80.62, 51.74, 90.21, 90.97, 96.88, 85.97, 96.88, 57.15, 86.18, 67.08, 55.07, 67.22, 43.47, 88.19, 80.21, 50.0, 94.1, 86.46, 87.92, 91.88, 86.94, 62.57, 27.57, 70.62, 74.51, 79.51, 74.17, 62.22, 51.25, 90.35, 74.58, 71.32, 95.56, 92.5, 46.43, 85.56, 87.99, 89.44, 14.17, 57.99, 87.71, 80.07, 62.5, 90.83, 91.04, 96.88, 90.83, 91.18, 86.94, 83.33, 31.46, 76.94, 76.6, 89.79, 78.33, 79.58, 86.04, 51.6, 62.78, 79.03, 90.14, 89.86, 58.68, 9.86, 41.25, 80.97, 96.6, 84.17, 85.49, 91.6, 58.89, 0.0, 68.75, 92.92, 90.83, 81.74, 85.28, 66.94, 45.0, 86.53, 80.14, 83.06, 79.38, 87.08, 79.86, 64.86, 94.24, 92.71, 87.43, 95.21, 87.64, 85.69, 18.75, 86.53, 83.96, 69.31, 62.43, 88.12, 67.5, 28.75, 89.58, 63.75, 88.75, 44.17, 0.0], "util_f4": [90.07, 89.17, 90.35, 70.56, 90.28, 81.04, 0.0, 34.58, 85.56, 84.37, 87.57, 81.32, 91.67, 61.39, 79.58, 85.9, 81.88, 79.31, 71.11, 78.68, 49.38, 18.12, 92.92, 83.4, 87.64, 91.74, 70.14, 47.92, 27.78, 90.69, 91.74, 92.36, 87.92, 87.64, 43.96, 9.72, 76.74, 53.06, 52.22, 48.26, 94.17, 48.54, 96.88, 87.99, 90.69, 90.76, 81.25, 56.32, 56.04, 79.17, 54.79, 58.26, 42.71, 80.49, 89.24, 49.38, 7.87, 85.42, 93.06, 87.15, 87.29, 93.4, 27.5, 70.9, 74.44, 80.9, 67.08, 68.12, 50.9, 94.1, 70.62, 71.32, 96.88, 66.74, 46.43, 85.21, 82.57, 67.57, 42.92, 92.15, 86.6, 85.62, 68.26, 90.69, 100.0, 90.69, 89.93, 94.44, 90.9, 81.74, 41.11, 83.82, 80.9, 87.43, 76.11, 80.83, 94.17, 47.08, 77.99, 88.26, 89.79, 90.97, 58.26, 16.11, 41.39, 85.07, 86.32, 91.04, 87.22, 81.04, 79.38, 0.0, 68.26, 92.99, 90.56, 85.28, 87.85, 91.67, 47.08, 86.6, 81.32, 83.06, 85.83, 81.88, 88.54, 64.93, 91.6, 88.4, 86.74, 86.25, 93.82, 66.53, 18.75, 86.11, 86.74, 69.58, 66.18, 80.49, 82.5, 26.25, 94.17, 86.67, 93.75, 43.75, 0.0], "tph_f1": [53.77, 40.19, 50.5, 46.67, 49.27, 45.66, 0.0, 21.33, 56.42, 59.33, 64.0, 63.53, 63.32, 72.93, 63.96, 61.39, 53.89, 58.91, 54.35, 41.13, 31.24, 44.5, 60.22, 51.94, 49.42, 40.0, 30.49, 22.09, 19.4, 35.78, 28.63, 39.69, 45.51, 46.28, 22.14, 41.15, 51.43, 35.07, 40.66, 40.29, 50.2, 19.45, 45.38, 53.36, 59.72, 64.09, 49.08, 54.66, 55.26, 35.72, 50.27, 65.24, 56.66, 48.71, 47.79, 54.8, 37.42, 39.58, 50.83, 37.72, 41.48, 37.23, 23.61, 47.61, 50.68, 44.14, 32.45, 29.06, 30.21, 52.05, 33.71, 55.18, 48.12, 34.55, 40.3, 49.79, 55.66, 49.78, 0.0, 49.87, 44.26, 46.15, 23.33, 41.41, 32.94, 34.33, 32.92, 20.22, 27.04, 40.81, 14.3, 30.01, 20.98, 22.89, 32.91, 26.32, 31.63, 20.17, 37.34, 31.09, 34.94, 41.01, 31.37, 23.69, 20.66, 28.22, 26.27, 36.73, 37.4, 0.0, 0.0, 0.0, 0.0, 92.56, 45.09, 82.65, 55.93, 39.28, 22.88, 46.15, 44.62, 40.92, 41.12, 39.93, 46.43, 22.84, 55.56, 52.82, 42.51, 22.73, 64.95, 62.82, 43.39, 51.71, 63.28, 57.68, 63.92, 53.3, 44.81, 25.74, 58.34, 36.94, 58.86, 26.67, 0.0], "tph_f2": [57.52, 44.28, 52.87, 51.36, 53.6, 51.81, 0.0, 23.1, 64.1, 69.13, 74.38, 73.95, 75.86, 72.62, 77.12, 29.88, 0.0, 31.85, 58.36, 47.56, 34.71, 48.8, 31.08, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.66, 52.78, 52.55, 53.74, 0.0, 0.0, 45.72, 42.56, 55.5, 53.46, 0.0, 0.0, 28.33, 65.99, 76.58, 84.71, 63.79, 33.56, 67.14, 43.21, 65.12, 78.73, 36.44, 67.03, 59.48, 79.55, 49.32, 55.74, 56.15, 47.95, 54.83, 45.65, 29.11, 68.31, 66.98, 55.64, 43.29, 37.45, 42.62, 66.73, 48.92, 67.59, 59.24, 44.54, 44.53, 65.85, 68.73, 58.09, 0.0, 61.63, 60.09, 64.65, 29.77, 58.54, 46.73, 52.36, 46.2, 29.81, 39.96, 58.47, 21.38, 44.14, 29.8, 30.92, 32.33, 38.29, 41.94, 27.25, 46.68, 41.09, 46.39, 24.34, 37.11, 22.66, 27.8, 36.72, 37.36, 48.74, 51.09, 47.65, 69.14, 0.0, 42.54, 51.49, 50.3, 42.95, 38.1, 34.31, 47.55, 37.09, 35.06, 35.79, 40.74, 35.5, 37.5, 16.82, 42.66, 46.3, 51.87, 40.0, 20.71, 38.3, 27.27, 42.55, 50.25, 44.63, 48.95, 44.03, 33.64, 17.25, 43.79, 56.23, 39.03, 17.46, 0.0], "tph_f3": [59.17, 43.68, 48.41, 46.55, 48.16, 50.86, 0.0, 25.4, 63.29, 65.8, 69.9, 70.86, 72.78, 74.15, 69.82, 63.38, 59.38, 62.31, 56.02, 45.33, 32.4, 45.95, 62.28, 58.52, 57.44, 43.94, 33.85, 0.0, 21.31, 16.42, 35.64, 44.87, 48.61, 50.27, 25.99, 45.76, 60.96, 41.67, 49.96, 50.65, 60.11, 23.15, 52.21, 56.32, 73.83, 41.3, 53.8, 58.38, 66.99, 39.35, 57.05, 69.74, 26.14, 58.02, 53.39, 34.43, 44.66, 46.79, 48.46, 47.22, 53.92, 42.41, 28.03, 57.51, 56.91, 50.38, 36.16, 31.74, 37.62, 56.22, 42.88, 60.09, 55.21, 42.37, 42.68, 59.58, 62.74, 50.83, 21.52, 52.83, 50.57, 53.19, 24.49, 49.11, 42.19, 42.05, 40.34, 27.3, 34.81, 49.08, 15.84, 34.65, 25.03, 27.33, 27.78, 30.17, 35.72, 25.69, 40.41, 36.18, 41.38, 51.12, 36.55, 21.63, 21.4, 31.5, 32.38, 44.59, 45.63, 43.82, 61.41, 0.0, 40.38, 46.03, 45.32, 43.94, 30.48, 31.14, 41.98, 31.82, 30.31, 31.1, 31.15, 31.89, 36.89, 17.41, 42.4, 42.26, 48.1, 46.56, 48.59, 37.63, 22.31, 43.28, 46.53, 44.18, 42.28, 34.96, 23.24, 14.55, 39.2, 40.5, 37.11, 17.24, 0.0], "tph_f4": [63.58, 48.2, 47.55, 47.11, 49.09, 51.06, 0.0, 32.51, 72.36, 74.6, 84.06, 86.15, 83.57, 77.76, 76.97, 66.19, 61.21, 69.29, 68.92, 55.01, 42.81, 57.39, 79.79, 73.1, 68.18, 49.51, 34.69, 23.86, 28.02, 44.65, 40.31, 50.51, 60.12, 57.62, 28.87, 8.55, 75.83, 42.36, 53.05, 49.6, 67.96, 29.75, 65.11, 71.57, 85.76, 88.56, 64.24, 60.54, 70.97, 49.83, 75.59, 85.27, 38.42, 70.43, 62.83, 81.3, 58.01, 57.33, 62.78, 51.24, 65.13, 50.27, 34.9, 79.23, 74.95, 65.77, 51.67, 43.35, 50.35, 73.63, 52.99, 79.82, 70.61, 38.42, 58.91, 74.61, 79.88, 66.74, 29.5, 72.46, 75.18, 81.61, 39.06, 72.69, 61.7, 67.85, 60.75, 53.92, 54.61, 79.21, 24.58, 53.09, 41.88, 47.49, 50.89, 52.84, 54.55, 40.46, 64.11, 60.49, 67.66, 83.99, 64.52, 40.16, 33.91, 53.47, 55.17, 71.3, 72.97, 76.38, 112.4, 0.0, 64.09, 78.38, 78.41, 71.91, 59.32, 45.22, 58.99, 51.51, 50.21, 51.09, 55.26, 52.36, 48.01, 25.92, 64.39, 62.11, 72.41, 62.5, 61.21, 46.89, 42.15, 66.66, 74.02, 65.43, 49.09, 64.52, 49.75, 29.03, 62.93, 71.66, 58.37, 26.75, 0.0], "solido": [61.5, 60.5, 60.5, 60.5, 60.5, 60.0, 0.0, 31.0, 62.5, 62.5, 63.0, 62.0, 62.0, 62.5, 63.0, 62.5, 63.0, 64.0, 63.5, 57.25, 63.0, 56.0, 62.5, 62.5, 62.0, 55.0, 55.5, 56.0, 56.0, 56.0, 59.0, 61.0, 60.5, 60.5, 30.5, 62.0, 59.5, 56.0, 61.0, 60.0, 62.0, 60.5, 59.0, 62.5, 65.0, 65.0, 62.5, 63.5, 61.5, 53.0, 63.0, 63.0, 62.5, 60.5, 62.5, 65.5, 57.5, 61.0, 61.0, 61.5, 61.5, 60.0, 60.5, 62.0, 62.0, 59.5, 54.5, 54.0, 57.5, 63.0, 58.5, 64.5, 64.5, 57.0, 63.5, 64.5, 64.5, 63.5, 32.5, 64.0, 64.5, 64.0, 64.0, 64.5, 62.5, 61.5, 62.0, 61.0, 62.0, 61.5, 30.0, 56.5, 53.5, 53.3, 55.5, 60.0, 62.0, 63.0, 64.0, 60.0, 65.0, 65.0, 63.5, 63.5, 62.5, 58.0, 56.25, 63.5, 64.0, 64.5, 64.5, 0.0, 63.5, 64.5, 65.0, 65.0, 62.0, 61.5, 60.5, 60.0, 60.5, 59.0, 60.0, 60.5, 60.5, 63.0, 56.0, 63.5, 64.0, 63.5, 63.0, 64.0, 32.0, 61.0, 64.0, 61.5, 63.0, 63.5, 63.5, 30.0, 63.5, 63.5, 64.0, 31.5, 0.0], "ml": ["enero", "febrero", "marzo", "abril", "mayo"], "m_relave_total": [148144.0, 142957.0, 168285.0, 129640.0, 119715.0], "m_relave_ceramico": [113284.0, 106997.0, 118945.0, 89300.0, 80455.0], "m_relave_prensa": [34860.0, 35960.0, 49340.0, 40340.0, 39260.0], "m_f1": [28061.7, 24127.3, 22558.4, 15858.7, 20131.1], "m_f2": [21326.3, 24051.9, 30188.3, 20659.1, 17718.2], "m_f3": [29716.6, 27539.1, 27609.1, 19170.0, 16599.2], "m_f4": [34178.9, 31278.9, 38555.5, 33529.0, 26006.6], "m_ciclos_fp1": [812.0, 918.0, 1242.0, 983.0, 929.0], "m_ciclos_fp2": [931.0, 880.0, 1225.0, 1034.0, 1034.0], "m_meta_fp1": [2232.0, 2016.0, 2232.0, 2160.0, 1728.0], "m_meta_fp2": [2232.0, 2016.0, 2232.0, 2160.0, 1728.0], "m_agua_f1": [14992.1, 12574.7, 12430.1, 8707.4, 10640.1], "m_agua_f2": [10925.3, 12415.4, 16501.0, 11214.7, 9205.6], "m_agua_f3": [15915.9, 14522.6, 15273.8, 10483.2, 8608.5], "m_agua_f4": [18169.4, 16531.3, 21325.4, 18148.9, 13395.5], "m_agua_total": [60002.5, 56044.0, 65530.4, 48553.9, 41849.5], "m_envio_psj": [120156.5, 88782.7, 75861.0, 68789.6, 62992.0], "m_envio_tlc": [10494.2, 36653.1, 74450.2, 61395.1, 51417.1], "m_prog_total": [0.0, 0.0, 0.0, 0.0, 158554.3], "m_prog_ceramico": [0.0, 0.0, 0.0, 0.0, 113434.3], "m_prog_prensa": [0.0, 0.0, 0.0, 0.0, 45120.0], "m_util_f1": [76.46, 74.17, 74.57, 64.71, 69.64], "m_util_f2": [66.23, 65.97, 78.15, 69.09, 76.96], "m_util_f3": [76.77, 75.15, 75.76, 73.02, 75.37], "m_util_f4": [75.53, 67.68, 77.52, 76.36, 76.41], "m_tph_f1": [47.81, 46.44, 39.55, 35.86, 46.75], "m_tph_f2": [51.85, 56.97, 52.14, 39.56, 37.76], "m_tph_f3": [51.83, 49.39, 45.23, 35.91, 35.4], "m_tph_f4": [58.58, 59.74, 61.65, 59.66, 54.7], "m_solido": [59.52, 60.07, 60.66, 60.35, 58.27]};
+
+let MFX={'enero':'2026-01','febrero':'2026-02','marzo':'2026-03','abril':'2026-04','mayo':'2026-05'};
+const C={f1:'#d27a36',f2:'#1e88a8',f3:'#4caf68',f4:'#8b7bd8',fp1:'#00a6c8',fp2:'#5f8ecf',gold:'#d69b36',solid:'#e0b84f',warn:'#d96b6b',graphite:'#44505c'};
+const TT={backgroundColor:'#161b22',borderColor:'#26313a',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#8b949e',padding:10,cornerRadius:6};
+Chart.defaults.color='#9aa7ad';Chart.defaults.borderColor='#26313a';Chart.defaults.font.family="'Barlow',sans-serif";Chart.defaults.font.size=11;
+
+let AF='all', CH={};
+
+const s=a=>a.reduce((x,y)=>x+y,0);
+const av=a=>{const v=a.filter(x=>x>0);return v.length?s(v)/v.length:0;};
+const safe=v=>{if(v===null||v===undefined||v===''||v!==v)return 0;if(typeof v==='number')return(isNaN(v)||!isFinite(v))?0:v;let t=String(v).trim().replace(/%/g,'').replace(/\s/g,'');if(t.includes(',')&&t.includes('.'))t=t.replace(/\./g,'').replace(',', '.');else if(t.includes(','))t=t.replace(',', '.');const f=parseFloat(t);return(isNaN(f)||!isFinite(f))?0:f;};
+const fmtK=n=>n>=1e6?(n/1e6).toFixed(2)+'M':n>=1000?(n/1000).toFixed(1)+'k':Math.round(n).toString();
+const ml=()=>D.ml.map(l=>l.charAt(0).toUpperCase()+l.slice(1));
+
+
+const MONTH_NAMES_FULL={
+  '01':'enero','02':'febrero','03':'marzo','04':'abril','05':'mayo','06':'junio',
+  '07':'julio','08':'agosto','09':'septiembre','10':'octubre','11':'noviembre','12':'diciembre'
+};
+const MONTH_LABELS_FULL={
+  '01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio',
+  '07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'
+};
+function parseFechaFlexible(raw){
+  if(raw instanceof Date && !isNaN(raw)) return raw.toISOString().slice(0,10);
+  const txt=String(raw??'').trim();
+  if(!txt) return '';
+  const iso=txt.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const dmy=txt.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+  if(dmy){
+    let y=dmy[3].length===2?'20'+dmy[3]:dmy[3];
+    return `${y}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  }
+  const d=new Date(txt);
+  return isNaN(d)?txt.split('T')[0]:d.toISOString().slice(0,10);
+}
+function addDaysISO(iso,days){
+  const d=new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function getOperationalWeekRange(){
+  const base=D.dates.length?D.dates[D.dates.length-1]:new Date().toISOString().slice(0,10);
+  const d=new Date(base+'T00:00:00');
+  const dow=d.getDay(); // 0 dom, 1 lun, 2 mar
+  const diff=(dow>=2)?dow-2:dow+5;
+  const start=new Date(d); start.setDate(d.getDate()-diff);
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  return {start:start.toISOString().slice(0,10),end:end.toISOString().slice(0,10)};
+}
+function refreshOperationalButton(){
+  const btn=document.getElementById('btn-operacional');
+  if(!btn)return;
+  const r=getOperationalWeekRange();
+  const fmt=iso=>{const p=iso.split('-');return `${p[2]}/${p[1]}`;};
+  btn.textContent=`SEMANA ${fmt(r.start)}–${fmt(r.end)}`;
+}
+
+function renderPeriodButtons(){
+  const bg=document.querySelector('.controls .bg');
+  if(!bg)return;
+  const abbr={enero:'ENE',febrero:'FEB',marzo:'MAR',abril:'ABR',mayo:'MAY',junio:'JUN',julio:'JUL',agosto:'AGO',septiembre:'SEP',octubre:'OCT',noviembre:'NOV',diciembre:'DIC'};
+  const months=(D.ml&&D.ml.length?D.ml:Object.keys(MFX));
+  bg.innerHTML=`<button type="button" class="btn ${AF==='all'?'active':''}" onclick="setF('all',this)">TODOS</button>`+
+    months.map(m=>`<button type="button" class="btn ${AF===m?'active':''}" onclick="setF('${m}',this)">${abbr[m]||m.slice(0,3).toUpperCase()}</button>`).join('')+
+    `<button type="button" class="btn sp ${AF==='operacional'?'active':''}" onclick="setF('operacional',this)" id="btn-operacional">SEMANA OPERACIONAL</button>`;
+  refreshOperationalButton();
+}
+function rebuildMonthIndex(){
+  const seen=[...new Set((D.dates||[]).map(d=>d.slice(0,7)))].sort();
+  MFX={};
+  D.ml=[];
+  seen.forEach(ym=>{const mm=ym.slice(5,7);const name=MONTH_NAMES_FULL[mm]||ym;MFX[name]=ym;D.ml.push(name);});
+  refreshOperationalButton();
+  renderPeriodButtons();
+}
+function getIdx(f){
+  if(f==='all')return D.dates.map((_,i)=>i);
+  if(f==='operacional'){const r=getOperationalWeekRange();return D.dates.reduce((a,d,i)=>{if(d>=r.start&&d<=r.end)a.push(i);return a;},[]);}
+  const p=MFX[f]||'';return D.dates.reduce((a,d,i)=>{if(p&&d.startsWith(p))a.push(i);return a;},[]);
+}
+function pick(arr,idx){return idx.map(i=>arr[i]);}
+
+// ── TAB ──
+window.showTab=function(name,el){
+  document.querySelectorAll('.tc-wrap').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tc-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+};
+
+// ── FILTER ──
+window.setF=function(f,btn){
+  AF=f;
+  document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  rebuildAll();
+};
+
+// ── EXCEL LOADER ──
+const RCOLS=['FECHA','MES','RELAVE FILTRADO TOTAL','RELAVE FILTRADO CERÁMICO','FILTRADO FILTROS PRENSA',
+  'TONELAJE FILTRADO F1','TONELAJE FILTRADO F2','TONELAJE FILTRADO F3','TONELAJE FILTRADO F4',
+  'CICLOS FP1','CICLOS FP2','UTILIZACION FILTRO 1','UTILIZACION FILTRO 2','UTILIZACION FILTRO 3','UTILIZACION FILTRO 4',
+  'PROMEDIO TPH F1','PROMEDIO TPH F2','PROMEDIO TPH F3','PROMEDIO TPH F4',
+  'AGUA RECUPERADA FILTRO 1','AGUA RECUPERADA FILTRO 2','AGUA RECUPERADA FILTRO 3','AGUA RECUPERADA FILTRO 4','% SOLIDO'];
+
+window.loadExcel=function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{raw:false,defval:''});
+      if(!rows.length){showErr('El archivo Excel está vacío.');return;}
+      const cols=Object.keys(rows[0]);
+      const miss=RCOLS.filter(c=>!cols.includes(c));
+      if(miss.length){showErr('⚠ Columnas faltantes:<br>'+miss.map(c=>'• <strong>'+c+'</strong>').join('<br>'));return;}
+      hideErr();
+      buildDataFromRows(rows);
+    }catch(err){showErr('Error al leer Excel: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value='';
+};
+
+function buildDataFromRows(rows){
+  const dm={};
+  rows.forEach(r=>{
+    let fecha=parseFechaFlexible(r['FECHA']);
+    if(!fecha)return;
+    if(!dm[fecha])dm[fecha]={_cnt:0};
+    dm[fecha]._cnt++;
+    const add=k=>{dm[fecha][k]=(dm[fecha][k]||0)+safe(r[k]);};
+    const avg=k=>{dm[fecha][k+'_s']=(dm[fecha][k+'_s']||0)+safe(r[k]);dm[fecha][k+'_n']=(dm[fecha][k+'_n']||0)+1;};
+    ['RELAVE FILTRADO TOTAL','RELAVE FILTRADO CERÁMICO','FILTRADO FILTROS PRENSA',
+     'TONELAJE FILTRADO F1','TONELAJE FILTRADO F2','TONELAJE FILTRADO F3','TONELAJE FILTRADO F4',
+     'CICLOS FP1','CICLOS FP2','Meta ciclos filtros prensa 1','Meta ciclos filtros prensa 2',
+     'AGUA RECUPERADA FILTRO 1','AGUA RECUPERADA FILTRO 2','AGUA RECUPERADA FILTRO 3','AGUA RECUPERADA FILTRO 4',
+     'Total agua recuperada','ENVIO AGUA HACIA PSJ','ENVIO AGUA HACIA TLC',
+     'Programa relave filtrado','Programa relave filtrado cerámico','Programa relave filtrado Prensa'].forEach(add);
+    ['UTILIZACION FILTRO 1','UTILIZACION FILTRO 2','UTILIZACION FILTRO 3','UTILIZACION FILTRO 4',
+     'PROMEDIO TPH F1','PROMEDIO TPH F2','PROMEDIO TPH F3','PROMEDIO TPH F4','% SOLIDO'].forEach(avg);
+  });
+
+  const dates=Object.keys(dm).sort();
+  const nd={dates,ml:[],m_total:[],m_ceramico:[],m_prensa:[],m_f1:[],m_f2:[],m_f3:[],m_f4:[],
+    m_ciclos_fp1:[],m_ciclos_fp2:[],m_meta_fp1:[],m_meta_fp2:[],
+    m_util_f1:[],m_util_f2:[],m_util_f3:[],m_util_f4:[],
+    m_tph_f1:[],m_tph_f2:[],m_tph_f3:[],m_tph_f4:[],
+    m_agua_f1:[],m_agua_f2:[],m_agua_f3:[],m_agua_f4:[],
+    m_prog_total:[],m_prog_ceramico:[],m_prog_prensa:[],m_envio_psj:[],m_envio_tlc:[],m_solido:[]};
+  const dkeys=['relave_total','relave_ceramico','relave_prensa','f1','f2','f3','f4',
+    'ciclos_fp1','ciclos_fp2','meta_fp1','meta_fp2',
+    'agua_f1','agua_f2','agua_f3','agua_f4','agua_total','envio_psj','envio_tlc',
+    'prog_total','prog_ceramico','prog_prensa',
+    'util_f1','util_f2','util_f3','util_f4','tph_f1','tph_f2','tph_f3','tph_f4','solido'];
+  dkeys.forEach(k=>nd[k]=[]);
+
+  const mmap={};
+  const mnames={};
+  const morder=[];
+
+  dates.forEach(fecha=>{
+    const d=dm[fecha];
+    const ag=k=>d[k]||0;
+    const av2=k=>d[k+'_n']?d[k+'_s']/d[k+'_n']:0;
+    const util=v=>v>0&&v<=1.5?v*100:v;
+    nd.relave_total.push(ag('RELAVE FILTRADO TOTAL'));nd.relave_ceramico.push(ag('RELAVE FILTRADO CERÁMICO'));nd.relave_prensa.push(ag('FILTRADO FILTROS PRENSA'));
+    nd.f1.push(ag('TONELAJE FILTRADO F1'));nd.f2.push(ag('TONELAJE FILTRADO F2'));nd.f3.push(ag('TONELAJE FILTRADO F3'));nd.f4.push(ag('TONELAJE FILTRADO F4'));
+    nd.ciclos_fp1.push(ag('CICLOS FP1'));nd.ciclos_fp2.push(ag('CICLOS FP2'));
+    nd.meta_fp1.push(ag('Meta ciclos filtros prensa 1'));nd.meta_fp2.push(ag('Meta ciclos filtros prensa 2'));
+    nd.agua_f1.push(ag('AGUA RECUPERADA FILTRO 1'));nd.agua_f2.push(ag('AGUA RECUPERADA FILTRO 2'));nd.agua_f3.push(ag('AGUA RECUPERADA FILTRO 3'));nd.agua_f4.push(ag('AGUA RECUPERADA FILTRO 4'));
+    nd.agua_total.push(ag('Total agua recuperada'));nd.envio_psj.push(ag('ENVIO AGUA HACIA PSJ'));nd.envio_tlc.push(ag('ENVIO AGUA HACIA TLC'));
+    nd.prog_total.push(ag('Programa relave filtrado'));nd.prog_ceramico.push(ag('Programa relave filtrado cerámico'));nd.prog_prensa.push(ag('Programa relave filtrado Prensa'));
+    nd.util_f1.push(util(av2('UTILIZACION FILTRO 1')));nd.util_f2.push(util(av2('UTILIZACION FILTRO 2')));nd.util_f3.push(util(av2('UTILIZACION FILTRO 3')));nd.util_f4.push(util(av2('UTILIZACION FILTRO 4')));
+    nd.tph_f1.push(av2('PROMEDIO TPH F1'));nd.tph_f2.push(av2('PROMEDIO TPH F2'));nd.tph_f3.push(av2('PROMEDIO TPH F3'));nd.tph_f4.push(av2('PROMEDIO TPH F4'));nd.solido.push(av2('% SOLIDO'));
+    const mo=fecha.slice(0,7);
+    if(!mmap[mo])mmap[mo]={};
+    dkeys.forEach(k=>mmap[mo][k]=(mmap[mo][k]||0)+nd[k][nd[k].length-1]);
+  });
+
+  Object.keys(mmap).sort().forEach(m=>{morder.push(m);mnames[m]=MONTH_NAMES_FULL[m.slice(5,7)]||m;});
+  morder.filter(m=>mmap[m]).forEach(m=>{
+    nd.ml.push(mnames[m]);
+    nd.m_total.push(mmap[m].relave_total);nd.m_ceramico.push(mmap[m].relave_ceramico);nd.m_prensa.push(mmap[m].relave_prensa);
+    nd.m_f1.push(mmap[m].f1);nd.m_f2.push(mmap[m].f2);nd.m_f3.push(mmap[m].f3);nd.m_f4.push(mmap[m].f4);
+    nd.m_ciclos_fp1.push(mmap[m].ciclos_fp1);nd.m_ciclos_fp2.push(mmap[m].ciclos_fp2);
+    nd.m_meta_fp1.push(mmap[m].meta_fp1);nd.m_meta_fp2.push(mmap[m].meta_fp2);
+    nd.m_util_f1.push(mmap[m].util_f1);nd.m_util_f2.push(mmap[m].util_f2);nd.m_util_f3.push(mmap[m].util_f3);nd.m_util_f4.push(mmap[m].util_f4);
+    nd.m_tph_f1.push(mmap[m].tph_f1);nd.m_tph_f2.push(mmap[m].tph_f2);nd.m_tph_f3.push(mmap[m].tph_f3);nd.m_tph_f4.push(mmap[m].tph_f4);
+    nd.m_agua_f1.push(mmap[m].agua_f1);nd.m_agua_f2.push(mmap[m].agua_f2);nd.m_agua_f3.push(mmap[m].agua_f3);nd.m_agua_f4.push(mmap[m].agua_f4);
+    nd.m_prog_total.push(mmap[m].prog_total);nd.m_prog_ceramico.push(mmap[m].prog_ceramico);nd.m_prog_prensa.push(mmap[m].prog_prensa);
+    nd.m_envio_psj.push(mmap[m].envio_psj);nd.m_envio_tlc.push(mmap[m].envio_tlc);nd.m_solido.push(mmap[m].solido/(dates.filter(d=>d.slice(0,7)===m).length||1));
+  });
+
+  D=nd;
+  rebuildMonthIndex();
+  AF='all';
+  document.querySelectorAll('.btn').forEach(b=>{b.classList.remove('active');});
+  document.querySelector('.btn[onclick*="all"]').classList.add('active');
+  rebuildAll();
+}
+
+function showErr(m){const b=document.getElementById('errbanner');b.innerHTML=m;b.style.display='block';}
+function hideErr(){document.getElementById('errbanner').style.display='none';}
+
+// ══ CHART HELPERS ══
+const bDs=(label,data,color,stack,extra)=>({label,data,backgroundColor:color+'cc',hoverBackgroundColor:color,borderRadius:3,borderSkipped:false,stack:stack,...(extra||{})});
+const lDs=(label,data,color)=>({label,data,borderColor:color,backgroundColor:'transparent',tension:0.3,pointRadius:2,pointHoverRadius:5,borderWidth:2});
+const aDs=(label,data,color)=>({label,data,borderColor:color,backgroundColor:color+'33',tension:0.3,pointRadius:0,fill:'origin',borderWidth:1.5});
+
+function mk(id,type,data,options){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  if(CH[id])CH[id].destroy();
+  CH[id]=new Chart(ctx.getContext('2d'),{type,data,options});
+}
+
+const baseOpts=(xLabel,yFmt)=>({
+  responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8}},tooltip:{...TT,mode:'index',intersect:false}},
+  scales:{x:{grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},
+          y:{grid:{color:'#26313a'},ticks:{callback:yFmt||((v)=>v)}}}
+});
+
+
+function isSpecialDaily(){return AF==='operacional';}
+function dayLabel(dateStr){const p=dateStr.split('-');return p[2]+'/'+p[1];}
+function groupedLabels(idx){return idx.map(i=>dayLabel(D.dates[i]));}
+function valuesForPeriod(key,idx,agg='sum'){
+  // Para filtros mensuales o período especial se muestran datos día a día.
+  // Solo la vista "Todos" agrupa por mes.
+  if(AF!=='all')return pick(D[key]||[],idx);
+  const G=groupFromIdx(idx);
+  return G[key]||[];
+}
+function labelsForPeriod(idx){
+  // Al seleccionar un mes, los gráficos secundarios quedan día a día.
+  // En "Todos" se mantiene agrupación mensual.
+  if(AF!=='all')return groupedLabels(idx);
+  return groupFromIdx(idx).labels;
+}
+
+function bestFromMap(map){
+  const entries=Object.entries(map).map(([k,v])=>[k,Number(v)||0]);
+  const max=Math.max(...entries.map(e=>e[1]));
+  return entries.find(e=>e[1]===max)?.[0] || entries[0]?.[0];
+}
+function lineDsSmart(label,data,color,bestLabel){
+  const best=label===bestLabel;
+  return {
+    label: best ? label+' · Filtro líder' : label,
+    data,
+    borderColor:color,
+    backgroundColor:'transparent',
+    tension:0.3,
+    pointRadius:best?3.5:2,
+    pointHoverRadius:best?7:5,
+    borderWidth:best?4:1.8,
+    borderDash:best?[]:[4,3],
+    borderJoinStyle:'round',
+    fill:false
+  };
+}
+function barSmart(label,data,color,bestLabel){
+  const best=label===bestLabel;
+  return {
+    label: best ? label+' · Mejor rendimiento' : label,
+    data,
+    backgroundColor:best?color:(color+'77'),
+    hoverBackgroundColor:color,
+    borderColor:color,
+    borderWidth:best?2:1,
+    borderRadius:8,
+    borderSkipped:false
+  };
+}
+function barColorByBest(labels,values,colorMap){
+  const max=Math.max(...values.map(v=>Number(v)||0));
+  return labels.map((l,i)=>{
+    const c=colorMap[l]||C.gold;
+    return (Number(values[i])||0)===max ? c : c+'66';
+  });
+}
+function borderWidthByBest(values){
+  const max=Math.max(...values.map(v=>Number(v)||0));
+  return values.map(v=>(Number(v)||0)===max?2.5:1);
+}
+function topLabelFromValues(labels,values){
+  const max=Math.max(...values.map(v=>Number(v)||0));
+  const i=values.findIndex(v=>(Number(v)||0)===max);
+  return i>=0?labels[i]:'';
+}
+
+function periodLabel(){
+  if(AF==='all'){const ys=[...new Set((D.dates||[]).map(d=>d.slice(0,4)))];const mlab=(D.ml||[]).map(l=>l.charAt(0).toUpperCase()+l.slice(1));return (mlab.length?mlab[0]+' – '+mlab[mlab.length-1]:'Datos')+(ys.length?' '+ys[ys.length-1]:'');}
+  if(AF==='operacional'){const r=getOperationalWeekRange();const fmt=iso=>{const p=iso.split('-');return `${p[2]}/${p[1]}/${p[0]}`;};return `Semana operacional ${fmt(r.start)} – ${fmt(r.end)}`;}
+  return (AF.charAt(0).toUpperCase()+AF.slice(1))+' 2026';
+}
+function groupFromIdx(idx){
+  const monthName=MONTH_LABELS_FULL;
+  const keys=['relave_total','relave_ceramico','relave_prensa','f1','f2','f3','f4','ciclos_fp1','ciclos_fp2','meta_fp1','meta_fp2','agua_f1','agua_f2','agua_f3','agua_f4','agua_total','envio_psj','envio_tlc','prog_total','prog_ceramico','prog_prensa'];
+  const avkeys=['util_f1','util_f2','util_f3','util_f4','tph_f1','tph_f2','tph_f3','tph_f4','solido'];
+  const g={};
+  idx.forEach(i=>{
+    const d=D.dates[i];
+    let id,label;
+    if(AF==='all'){id=d.slice(0,7);label=monthName[d.slice(5,7)]||id;}
+    else{id='sel';label=periodLabel().replace(' 2026','');}
+    if(!g[id]){g[id]={label,n:0};keys.forEach(k=>g[id][k]=0);avkeys.forEach(k=>{g[id][k+'_s']=0;g[id][k+'_n']=0;});}
+    g[id].n++;
+    keys.forEach(k=>g[id][k]+=Number((D[k]||[])[i])||0);
+    avkeys.forEach(k=>{const v=Number((D[k]||[])[i])||0;if(v>0){g[id][k+'_s']+=v;g[id][k+'_n']++;}});
+  });
+  const ids=Object.keys(g).sort();
+  const out={labels:ids.map(id=>g[id].label)};
+  keys.forEach(k=>out[k]=ids.map(id=>g[id][k]));
+  avkeys.forEach(k=>out[k]=ids.map(id=>g[id][k+'_n']?g[id][k+'_s']/g[id][k+'_n']:0));
+  return out;
+}
+
+// ── BUILD MAIN TAB ──
+function buildMain(){
+  const idx=getIdx(AF);
+  const dlabels=pick(D.dates,idx).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];});
+  const cer=pick(D.relave_ceramico,idx);
+  const pre=pick(D.relave_prensa,idx);
+  const prog=pick(D.prog_total,idx);
+
+  const realTotal=cer.map((c,i)=>c+pre[i]);
+  mk('chMain','bar',{labels:dlabels,datasets:[
+    {label:'Cerámico + Prensa REAL',data:realTotal,type:'bar',backgroundColor:C.f1+'cc',hoverBackgroundColor:C.f1,borderColor:C.f1,borderWidth:1,borderRadius:6,barPercentage:.62,categoryPercentage:.72},
+    {label:'Programado',data:prog,type:'line',borderColor:C.gold,backgroundColor:'transparent',borderWidth:2.4,pointRadius:2.5,pointHoverRadius:5,tension:0.28,borderDash:[6,4],fill:false},
+  ]},{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8}},
+      tooltip:{...TT,mode:'index',intersect:false,callbacks:{
+        footer:items=>{
+          const i=items[0].dataIndex;
+          const real=realTotal[i],p=prog[i];
+          if(p>0){const diff=((real-p)/p*100).toFixed(1);return'Desv. vs programado: '+(diff>0?'+':'')+diff+'%';}
+          return'';
+        }
+      }}},
+    scales:{x:{stacked:false,grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},
+            y:{stacked:false,grid:{color:'#26313a'},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}
+  });
+
+  mk('chSolido','line',{labels:dlabels,datasets:[
+    {label:'% Sólido',data:pick(D.solido||[],idx),borderColor:C.solid,backgroundColor:C.solid+'22',fill:true,tension:0.25,pointRadius:3,pointHoverRadius:6,borderWidth:2.5},
+  ]},{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top',labels:{boxWidth:10}},tooltip:{...TT,callbacks:{label:c=>'% Sólido: '+Number(c.raw).toFixed(1)+'%'}}},scales:{x:{grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},y:{grid:{color:'#26313a'},ticks:{callback:v=>v+'%'}}}});
+
+  const mlab=labelsForPeriod(idx);
+  const cerReal=valuesForPeriod('relave_ceramico',idx);
+  const cerProg=valuesForPeriod('prog_ceramico',idx);
+  const fpReal=valuesForPeriod('relave_prensa',idx);
+  const fpProg=valuesForPeriod('prog_prensa',idx);
+  const cic1=valuesForPeriod('ciclos_fp1',idx);
+  const meta1=valuesForPeriod('meta_fp1',idx);
+  const cic2=valuesForPeriod('ciclos_fp2',idx);
+  const meta2=valuesForPeriod('meta_fp2',idx);
+
+  mk('chCerProg','bar',{labels:mlab,datasets:[
+    {label:'Real diario',data:cerReal,type:'bar',backgroundColor:C.f1+'dd',borderColor:C.f1,borderWidth:1,borderRadius:6,hoverBackgroundColor:C.f1,barPercentage:.62,categoryPercentage:.72},
+    {label:'Programado diario',data:cerProg,type:'line',borderColor:C.gold,backgroundColor:'transparent',borderWidth:2.4,pointRadius:3,pointHoverRadius:5,tension:.25,borderDash:[6,4],fill:false},
+  ]},baseOpts(null,v=>(v/1000).toFixed(0)+'k'));
+
+  mk('chFPProg','bar',{labels:mlab,datasets:[
+    {label:'Real diario',data:fpReal,type:'bar',backgroundColor:C.fp1+'dd',borderColor:C.fp1,borderWidth:1,borderRadius:6,hoverBackgroundColor:C.fp1,barPercentage:.62,categoryPercentage:.72},
+    {label:'Programado diario',data:fpProg,type:'line',borderColor:C.gold,backgroundColor:'transparent',borderWidth:2.4,pointRadius:3,pointHoverRadius:5,tension:.25,borderDash:[6,4],fill:false},
+  ]},baseOpts(null,v=>(v/1000).toFixed(0)+'k'));
+
+  mk('chCiclos','bar',{labels:mlab,datasets:[
+    {label:'FP1 real diario',data:cic1,type:'bar',backgroundColor:C.fp1+'dd',borderColor:C.fp1,borderWidth:1,borderRadius:6,hoverBackgroundColor:C.fp1,barPercentage:.62,categoryPercentage:.72},
+    {label:'FP1 programado diario',data:meta1,type:'line',borderColor:C.gold,backgroundColor:'transparent',borderWidth:2.4,pointRadius:3,pointHoverRadius:5,tension:.25,borderDash:[6,4],fill:false},
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,padding:6}},tooltip:{...TT,mode:'index',intersect:false}},
+    scales:{x:{stacked:false,grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},y:{grid:{color:'#26313a'}}}});
+
+  mk('chCiclos2','bar',{labels:mlab,datasets:[
+    {label:'FP2 real diario',data:cic2,type:'bar',backgroundColor:C.fp2+'dd',borderColor:C.fp2,borderWidth:1,borderRadius:6,hoverBackgroundColor:C.fp2,barPercentage:.62,categoryPercentage:.72},
+    {label:'FP2 programado diario',data:meta2,type:'line',borderColor:C.gold,backgroundColor:'transparent',borderWidth:2.4,pointRadius:3,pointHoverRadius:5,tension:.25,borderDash:[6,4],fill:false},
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,padding:6}},tooltip:{...TT,mode:'index',intersect:false}},
+    scales:{x:{stacked:false,grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},y:{grid:{color:'#26313a'}}}});
+
+  // Util table
+  const ui=[
+    {n:'F1',c:C.f1,v:av(pick(D.util_f1,idx))},
+    {n:'F2',c:C.f2,v:av(pick(D.util_f2,idx))},
+    {n:'F3',c:C.f3,v:av(pick(D.util_f3,idx))},
+    {n:'F4',c:C.f4,v:av(pick(D.util_f4,idx))},
+  ];
+  document.getElementById('utTable').innerHTML=ui.map(({n,c,v})=>{
+    const pct=Math.min(v,100),st=v>=85?'#6f8f72':v>=70?'#b8945f':'#b85c5c';
+    return`<tr><td class="uname" style="color:${c}">${n}</td>
+    <td style="padding:0 8px"><div class="ubg"><div class="ufill" style="width:${pct}%;background:linear-gradient(90deg,${c}66,${c})"></div></div></td>
+    <td class="upct" style="color:${st}">${v.toFixed(1)}%</td></tr>
+    <tr><td colspan="3" style="height:5px"></td></tr>`;
+  }).join('');
+}
+
+// ── BUILD CERÁMICOS TAB ──
+function buildCeramico(){
+  const idx=getIdx(AF);
+  const dlabels=pick(D.dates,idx).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];});
+
+  const tonSeries={
+    F1:pick(D.f1,idx),
+    F2:pick(D.f2,idx),
+    F3:pick(D.f3,idx),
+    F4:pick(D.f4,idx)
+  };
+  const tonTotals={F1:s(tonSeries.F1),F2:s(tonSeries.F2),F3:s(tonSeries.F3),F4:s(tonSeries.F4)};
+  const bestTon=bestFromMap(tonTotals);
+
+  mk('chTPH','line',{labels:dlabels,datasets:[
+    lineDsSmart('F1',tonSeries.F1,C.f1,bestTon),
+    lineDsSmart('F2',tonSeries.F2,C.f2,bestTon),
+    lineDsSmart('F3',tonSeries.F3,C.f3,bestTon),
+    lineDsSmart('F4',tonSeries.F4,C.f4,bestTon),
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8}},
+      tooltip:{...TT,mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+Number(c.raw||0).toLocaleString('es-CL')+' ton'}}},
+    scales:{x:{grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},
+            y:{grid:{color:'#26313a'},ticks:{callback:v=>(v/1000).toFixed(1)+'k ton'}}}});
+
+  // Tasa de filtrado por filtro = toneladas filtradas / horas efectivas de operación.
+  // Se conserva el cálculo existente usando TPH diario disponible del Excel.
+  const tasaFiltro=(tonKey,tphKey)=>{
+    const tons=pick(D[tonKey]||[],idx), tph=pick(D[tphKey]||[],idx);
+    let totalTons=0,totalHours=0;
+    tons.forEach((t,i)=>{const r=Number(tph[i])||0;if(t>0&&r>0){totalTons+=Number(t)||0;totalHours+=(Number(t)||0)/r;}});
+    return totalHours>0?totalTons/totalHours:0;
+  };
+  const tasaLabels=['F1','F2','F3','F4'];
+  const tasaData=[tasaFiltro('f1','tph_f1'),tasaFiltro('f2','tph_f2'),tasaFiltro('f3','tph_f3'),tasaFiltro('f4','tph_f4')];
+  const bestTasa=topLabelFromValues(tasaLabels,tasaData);
+  mk('chFMens','bar',{labels:tasaLabels,datasets:[{
+    label:'TPH promedio por filtro',
+    data:tasaData.map(v=>parseFloat(v.toFixed(1))),
+    backgroundColor:barColorByBest(tasaLabels,tasaData,{F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}),
+    hoverBackgroundColor:tasaLabels.map(l=>({F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}[l])),
+    borderColor:tasaLabels.map(l=>({F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}[l])),
+    borderWidth:borderWidthByBest(tasaData),
+    borderRadius:8
+  }]},{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>`${c.label}: ${Number(c.raw||0).toFixed(1)} TPH${c.label===bestTasa?' · Mejor rendimiento':''}`}}},
+    scales:{x:{stacked:false,grid:{color:'#26313a'},ticks:{callback:v=>v+' TPH'}},y:{stacked:false,grid:{color:'#26313a'}}}});
+
+  // Utilización: promedio mensual/período por filtro, no día a día.
+  const utilLabels=['F1','F2','F3','F4'];
+  const utilData=[
+    av(pick(D.util_f1,idx)),
+    av(pick(D.util_f2,idx)),
+    av(pick(D.util_f3,idx)),
+    av(pick(D.util_f4,idx))
+  ];
+  const bestUtil=topLabelFromValues(utilLabels,utilData);
+  mk('chUtilMens','bar',{labels:utilLabels,datasets:[{
+    label:'Utilización promedio del período',
+    data:utilData.map(v=>parseFloat(v.toFixed(1))),
+    backgroundColor:barColorByBest(utilLabels,utilData,{F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}),
+    hoverBackgroundColor:utilLabels.map(l=>({F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}[l])),
+    borderColor:utilLabels.map(l=>({F1:C.f1,F2:C.f2,F3:C.f3,F4:C.f4}[l])),
+    borderWidth:borderWidthByBest(utilData),
+    borderRadius:8
+  }]},{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>`${c.label}: ${Number(c.raw||0).toFixed(1)}%${c.label===bestUtil?' · Filtro líder':''}`}}},
+    scales:{x:{grid:{color:'#26313a'},min:0,max:110,ticks:{callback:v=>v+'%'}},y:{grid:{color:'#26313a'}}}});
+
+}
+
+// ── BUILD AGUA TAB ──
+function buildAgua(){
+  const idx=getIdx(AF);
+  const dlabels=pick(D.dates,idx).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];});
+  const G=groupFromIdx(idx);
+  const mlab=G.labels;
+
+  mk('chAguaD','line',{labels:dlabels,datasets:[
+    aDs('F1',pick(D.agua_f1,idx),C.f1),aDs('F2',pick(D.agua_f2,idx),C.f2),
+    aDs('F3',pick(D.agua_f3,idx),C.f3),aDs('F4',pick(D.agua_f4,idx),C.f4),
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}},
+      tooltip:{...TT,mode:'index',intersect:false,callbacks:{footer:items=>'Total: '+items.reduce((a,b)=>a+b.raw,0).toFixed(0)+' m³'}}},
+    scales:{x:{grid:{color:'#26313a'},ticks:{font:{size:10},maxTicksLimit:22}},y:{grid:{color:'#26313a'},ticks:{callback:v=>v+' m³'}}}});
+
+  mk('chAguaM','bar',{labels:mlab,datasets:[
+    bDs('F1',G.agua_f1,C.f1,'s'),bDs('F2',G.agua_f2,C.f2,'s'),bDs('F3',G.agua_f3,C.f3,'s'),bDs('F4',G.agua_f4,C.f4,'s'),
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}},tooltip:{...TT,callbacks:{label:c=>c.dataset.label+': '+c.raw.toLocaleString('es-CL')+' m³'}}},
+    scales:{x:{stacked:true,grid:{color:'#26313a'}},y:{stacked:true,grid:{color:'#26313a'},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}});
+
+  const totals=[s(pick(D.agua_f1,idx)),s(pick(D.agua_f2,idx)),s(pick(D.agua_f3,idx)),s(pick(D.agua_f4,idx))];
+  mk('chAguaDona','doughnut',{
+    labels:['F1','F2','F3','F4'],
+    datasets:[{data:totals,backgroundColor:[C.f1+'cc',C.f2+'cc',C.f3+'cc',C.f4+'cc'],
+      hoverBackgroundColor:[C.f1,C.f2,C.f3,C.f4],borderColor:'#161b22',borderWidth:2,hoverOffset:6}]
+  },{responsive:true,maintainAspectRatio:true,cutout:'65%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}},
+      tooltip:{...TT,callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return c.label+': '+c.raw.toFixed(0)+' m³ ('+((c.raw/t)*100).toFixed(1)+'%)';}}}}});
+
+  mk('chEnvio','bar',{labels:mlab,datasets:[
+    bDs('Envío PSJ',G.envio_psj,'#0891b2','s'),bDs('Envío TLC',G.envio_tlc,'#7c3aed','s'),
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}},tooltip:{...TT,callbacks:{label:c=>c.dataset.label+': '+c.raw.toLocaleString('es-CL')+' m³'}}},
+    scales:{x:{stacked:true,grid:{color:'#26313a'}},y:{stacked:true,grid:{color:'#26313a'},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}});
+}
+
+// ── BUILD COMPARATIVO (solo F2, F3, F4) ──
+function buildComp(){
+  const idx=getIdx(AF);
+  const M={
+    F2:{ton:s(pick(D.f2,idx)),tph:av(pick(D.tph_f2,idx)),agua:s(pick(D.agua_f2,idx)),util:av(pick(D.util_f2,idx)),col:C.f2},
+    F3:{ton:s(pick(D.f3,idx)),tph:av(pick(D.tph_f3,idx)),agua:s(pick(D.agua_f3,idx)),util:av(pick(D.util_f3,idx)),col:C.f3},
+    F4:{ton:s(pick(D.f4,idx)),tph:av(pick(D.tph_f4,idx)),agua:s(pick(D.agua_f4,idx)),util:av(pick(D.util_f4,idx)),col:C.f4},
+  };
+  const keys=['F2','F3','F4'];
+  const maxV={ton:Math.max(...keys.map(k=>M[k].ton)),tph:Math.max(...keys.map(k=>M[k].tph)),agua:Math.max(...keys.map(k=>M[k].agua)),util:Math.max(...keys.map(k=>M[k].util))};
+  keys.forEach(k=>{
+    const m=M[k];
+    m.score=(maxV.ton>0?m.ton/maxV.ton:0)+(maxV.tph>0?m.tph/maxV.tph:0)+(maxV.agua>0?m.agua/maxV.agua:0)+(maxV.util>0?m.util/maxV.util:0);
+  });
+  const ranked=keys.slice().sort((a,b)=>M[b].score-M[a].score);
+  const avgScore=s(keys.map(k=>M[k].score))/3;
+  const avgTon=s(keys.map(k=>M[k].ton))/3;
+  const avgTPH=s(keys.map(k=>M[k].tph))/3;
+  const avgUtil=s(keys.map(k=>M[k].util))/3;
+  const rc=['r1','r2','r3'];
+
+  // Cards
+  document.getElementById('compCards').innerHTML=ranked.map((k,i)=>{
+    const m=M[k];
+    const devTon=avgTon>0?((m.ton-avgTon)/avgTon*100):0;
+    const devUtil=avgUtil>0?((m.util-avgUtil)/avgUtil*100):0;
+    const isBest=i===0,isWorst=i===ranked.length-1;
+    return`<div class="cpc${isBest?' best':isWorst?' worst':''}">
+      <div class="cpc-rank ${rc[i]}">Rank #${i+1}${isBest?' 🏆':isWorst?' ⚠':''}</div>
+      <div class="cpc-name" style="color:${m.col}">Filtro ${k}</div>
+      <div class="cpc-metric">Tonelaje: <strong>${(m.ton/1000).toFixed(1)}k ton</strong></div>
+      <div class="cpc-metric">TPH prom: <strong>${m.tph.toFixed(1)}</strong></div>
+      <div class="cpc-metric">Agua rec: <strong>${(m.agua/1000).toFixed(1)}k m³</strong></div>
+      <div class="cpc-metric">Utilización: <strong>${m.util.toFixed(1)}%</strong></div>
+      <div class="cpc-metric">Score: <strong>${m.score.toFixed(2)}/4</strong></div>
+      <div class="cpc-dev" style="color:${devTon>=0?'#6f8f72':'#b85c5c'}">${devTon>=0?'↑':'↓'} ${Math.abs(devTon).toFixed(1)}% vs prom. ton</div>
+    </div>`;
+  }).join('');
+
+  // Horizontal bar charts
+  const hBar=(id,label,data,name)=>{
+    const best=topLabelFromValues(keys,data);
+    mk(id,'bar',{labels:keys,datasets:[{
+      label,
+      data,
+      backgroundColor:keys.map((k,i)=>k===best?M[k].col:M[k].col+'66'),
+      hoverBackgroundColor:keys.map(k=>M[k].col),
+      borderColor:keys.map(k=>M[k].col),
+      borderWidth:borderWidthByBest(data),
+      borderRadius:8,
+    }]},{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>`${label}: ${c.raw}${c.label===best?' · Mejor rendimiento':''}`}}},
+      scales:{x:{grid:{color:'#26313a'}},y:{grid:{color:'#26313a'}}}});
+  };
+  hBar('chCTon','Tonelaje (ton)',keys.map(k=>Math.round(M[k].ton)),'cTon');
+  hBar('chCTPH','TPH promedio',keys.map(k=>parseFloat(M[k].tph.toFixed(1))),'cTPH');
+  hBar('chCAgua','Agua (m³)',keys.map(k=>Math.round(M[k].agua)),'cAgua');
+  hBar('chCUtil','Utilización (%)',keys.map(k=>parseFloat(M[k].util.toFixed(1))),'cUtil');
+
+  // TPH daily F2 F3 F4
+  const dlabels=pick(D.dates,idx).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];});
+  const tphTotals={F2:av(pick(D.tph_f2,idx)),F3:av(pick(D.tph_f3,idx)),F4:av(pick(D.tph_f4,idx))};
+  const bestTPH=bestFromMap(tphTotals);
+  mk('chCTPHD','line',{labels:dlabels,datasets:[
+    lineDsSmart('F2',pick(D.tph_f2,idx),C.f2,bestTPH),
+    lineDsSmart('F3',pick(D.tph_f3,idx),C.f3,bestTPH),
+    lineDsSmart('F4',pick(D.tph_f4,idx),C.f4,bestTPH),
+  ]},baseOpts(null,v=>v+' TPH'));
+
+  // Deviation bars (multi-metric)
+  const devs={ton:keys.map(k=>avgTon>0?((M[k].ton-avgTon)/avgTon*100):0),
+    tph:keys.map(k=>avgTPH>0?((M[k].tph-avgTPH)/avgTPH*100):0),
+    util:keys.map(k=>avgUtil>0?((M[k].util-avgUtil)/avgUtil*100):0)};
+  mk('chCDev','bar',{labels:keys,datasets:[
+    {label:'Desv. Tonelaje %',data:devs.ton.map(v=>parseFloat(v.toFixed(1))),backgroundColor:devs.ton.map(v=>v>=0?C.f1+'88':'#b85c5c88'),borderRadius:4},
+    {label:'Desv. TPH %',data:devs.tph.map(v=>parseFloat(v.toFixed(1))),backgroundColor:devs.tph.map(v=>v>=0?C.f2+'88':'#b85c5c88'),borderRadius:4},
+    {label:'Desv. Util %',data:devs.util.map(v=>parseFloat(v.toFixed(1))),backgroundColor:devs.util.map(v=>v>=0?C.f3+'88':'#b85c5c88'),borderRadius:4},
+  ]},{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,padding:6}},tooltip:{...TT,callbacks:{label:c=>`${c.dataset.label}: ${c.raw>0?'+':''}${c.raw}%`}}},
+    scales:{x:{grid:{color:'#26313a'}},y:{grid:{color:'#26313a'},ticks:{callback:v=>(v>0?'+':'')+v+'%'}}}});
+
+  // Diagnostic
+  const worst=ranked[ranked.length-1],best=ranked[0];
+  const wm=M[worst],bm=M[best];
+  const gap=bm.score>0?((bm.score-wm.score)/bm.score*100).toFixed(1):0;
+  const period=periodLabel();
+  document.getElementById('diagBox').innerHTML=`
+    <div class="diagtitle">📋 Diagnóstico Técnico Automático — Período: ${period}</div>
+    <div class="diagtext">
+      <strong style="color:#766b8f">Análisis basado exclusivamente en datos reales del Excel cargado.</strong><br><br>
+      En el período <strong>${period}</strong>, el análisis comparativo de los filtros F2, F3 y F4 determina que el
+      <strong style="color:${wm.col}">Filtro Cerámico ${worst}</strong> presenta el menor rendimiento operacional,
+      con un puntaje de eficiencia compuesto de <strong>${wm.score.toFixed(2)}/4</strong>
+      frente al promedio de los tres filtros de <strong>${avgScore.toFixed(2)}/4</strong>.<br><br>
+      <strong>Indicadores ${worst}:</strong>
+      Tonelaje filtrado: ${(wm.ton/1000).toFixed(1)}k ton ·
+      TPH promedio: ${wm.tph.toFixed(1)} ·
+      Agua recuperada: ${(wm.agua/1000).toFixed(1)}k m³ ·
+      Utilización: ${wm.util.toFixed(1)}%<br><br>
+      El <strong style="color:${bm.col}">Filtro ${best}</strong> lidera el grupo con ${(bm.ton/1000).toFixed(1)}k ton,
+      representando una brecha de eficiencia de <strong>${gap}%</strong> respecto al filtro de menor desempeño.<br><br>
+      <em style="color:var(--muted)">La diferencia de rendimiento observada en el Filtro ${worst} puede estar
+      asociada a condición de las placas cerámicas, saturación de capacidad filtrante, mayor frecuencia de mantenimiento
+      u otras condiciones operacionales que requieren evaluación técnica por parte de supervisión.</em>
+    </div>`;
+}
+
+
+function setKpiProgDiff(progId,diffId,prog,diff,unit){
+  const p=document.getElementById(progId);
+  const d=document.getElementById(diffId);
+  if(!p||!d)return;
+  prog = Number(prog)||0;
+  diff = Number(diff)||0;
+  p.textContent='Prog: '+Math.round(prog).toLocaleString('es-CL')+' '+unit;
+  if(prog>0){
+    const pct=(diff/prog)*100;
+    const estado=diff>=0?'Sobre programa':'Déficit';
+    d.textContent=estado+': '+(pct>=0?'+':'')+pct.toFixed(1).replace('.',',')+'% ('+(diff>=0?'+':'')+Math.round(diff).toLocaleString('es-CL')+' '+unit+')';
+  }else{
+    d.textContent='Sin programa definido';
+  }
+  p.style.color='#b8945f';
+  d.style.color=diff>=0?'#6f8f72':'#b85c5c';
+}
+
+const UTIL_TARGETS = { f1:71, f2:72, f3:77, f4:76 };
+const UTIL_TARGET_AVG = (UTIL_TARGETS.f1 + UTIL_TARGETS.f2 + UTIL_TARGETS.f3 + UTIL_TARGETS.f4) / 4;
+
+function calcUtilLossByFilter(filterTon, utilPct, targetPct){
+  const ton = Number(filterTon) || 0;
+  const util = Number(utilPct) || 0;
+  const target = Number(targetPct) || 0;
+  if(ton <= 0 || util <= 0 || util >= target) return 0;
+  return ton * ((target - util) / util);
+}
+
+function updateUtilizacionLoss(lossTotal){
+  const metaEl=document.getElementById('k-util-meta');
+  const lossEl=document.getElementById('k-util-loss');
+  if(!metaEl || !lossEl) return;
+  const loss = Math.max(0, Number(lossTotal) || 0);
+  metaEl.textContent='Metas: F1 71% · F2 72% · F3 77% · F4 76%';
+  lossEl.textContent='Pérdida: -'+Math.round(loss).toLocaleString('es-CL')+' ton';
+  lossEl.style.color=loss>0?'#b85c5c':'#6f8f72';
+}
+
+// ── KPIs ──
+function updateKPIs(){
+  const idx=getIdx(AF);
+  const total=s(pick(D.relave_total,idx));
+  const cer=s(pick(D.relave_ceramico,idx));
+  const pre=s(pick(D.relave_prensa,idx));
+  const c1=s(pick(D.ciclos_fp1,idx)),c2=s(pick(D.ciclos_fp2,idx));
+  const progTotal=s(pick(D.prog_total||[],idx));
+  const progCer=s(pick(D.prog_ceramico||[],idx));
+  const progPre=s(pick(D.prog_prensa||[],idx));
+  const metaC1=s(pick(D.meta_fp1||[],idx)), metaC2=s(pick(D.meta_fp2||[],idx));
+  const agua=s(pick(D.agua_total,idx));
+  const u1=av(pick(D.util_f1,idx)),u2=av(pick(D.util_f2,idx)),u3=av(pick(D.util_f3,idx)),u4=av(pick(D.util_f4,idx));
+  const uAvg=(u1+u2+u3+u4)/4;
+  const f1t=s(pick(D.f1,idx)),f2t=s(pick(D.f2,idx)),f3t=s(pick(D.f3,idx)),f4t=s(pick(D.f4,idx));
+  const maxF=Math.max(f1t,f2t,f3t,f4t);
+  const bestF=['F1','F2','F3','F4'][[f1t,f2t,f3t,f4t].indexOf(maxF)];
+
+  document.getElementById('k-total').innerHTML=total.toLocaleString('es-CL')+'<span class="ku">ton</span>';
+  document.getElementById('k-cer').innerHTML=cer.toLocaleString('es-CL')+'<span class="ku">ton</span>';
+  document.getElementById('k-pre').innerHTML=pre.toLocaleString('es-CL')+'<span class="ku">ton</span>';
+  document.getElementById('k-cic').innerHTML=(c1+c2).toLocaleString('es-CL')+'<span class="ku">cic.</span>';
+  document.getElementById('k-cic-sub').textContent='FP1: '+c1.toLocaleString('es-CL')+' · FP2: '+c2.toLocaleString('es-CL');
+  setKpiProgDiff('k-total-prog','k-total-diff',progTotal,total-progTotal,'ton');
+  setKpiProgDiff('k-cer-prog','k-cer-diff',progCer,cer-progCer,'ton');
+  setKpiProgDiff('k-pre-prog','k-pre-diff',progPre,pre-progPre,'ton');
+  setKpiProgDiff('k-cic-prog','k-cic-diff',metaC1+metaC2,(c1+c2)-(metaC1+metaC2),'cic');
+  document.getElementById('k-agua').innerHTML=agua.toLocaleString('es-CL',{maximumFractionDigits:0})+'<span class="ku">m³</span>';
+  document.getElementById('k-util').innerHTML=uAvg.toFixed(1)+'<span class="ku">%</span>';
+  const b=document.getElementById('k-util-badge');
+  const utilLoss = calcUtilLossByFilter(f1t,u1,UTIL_TARGETS.f1) + calcUtilLossByFilter(f2t,u2,UTIL_TARGETS.f2) + calcUtilLossByFilter(f3t,u3,UTIL_TARGETS.f3) + calcUtilLossByFilter(f4t,u4,UTIL_TARGETS.f4);
+  b.textContent=uAvg>=UTIL_TARGET_AVG?'✓ Sobre meta prom.':uAvg>=70?'⚠ Bajo meta prom.':'✗ Crítico';
+  b.className='kbadge '+(uAvg>=UTIL_TARGET_AVG?'bok':uAvg>=70?'bwarn':'bbad');
+  updateUtilizacionLoss(utilLoss);
+  document.getElementById('k-best').innerHTML=bestF+'<span class="ku" style="font-size:12px"> '+fmtK(maxF)+' ton</span>';
+  document.getElementById('k-f1t').innerHTML=fmtK(f1t)+'<span class="ku">ton</span>';
+  document.getElementById('k-f2t').innerHTML=fmtK(f2t)+'<span class="ku">ton</span>';
+  document.getElementById('k-f3t').innerHTML=fmtK(f3t)+'<span class="ku">ton</span>';
+  document.getElementById('k-f4t').innerHTML=fmtK(f4t)+'<span class="ku">ton</span>';
+  const uF1=av(pick(D.util_f1,idx));
+  const uF2=av(pick(D.util_f2,idx));
+  const uF3=av(pick(D.util_f3,idx));
+  const uF4=av(pick(D.util_f4,idx));
+  document.getElementById('k-f1-tph').innerHTML='TPH prom: '+av(pick(D.tph_f1,idx)).toFixed(1)+'<br><span class="kutil-line">Util: '+uF1.toFixed(1)+'% · Meta 71%</span>';
+  document.getElementById('k-f2-tph').innerHTML='TPH prom: '+av(pick(D.tph_f2,idx)).toFixed(1)+'<br><span class="kutil-line">Util: '+uF2.toFixed(1)+'% · Meta 72%</span>';
+  document.getElementById('k-f3-tph').innerHTML='TPH prom: '+av(pick(D.tph_f3,idx)).toFixed(1)+'<br><span class="kutil-line">Util: '+uF3.toFixed(1)+'% · Meta 77%</span>';
+  document.getElementById('k-f4-tph').innerHTML='TPH prom: '+av(pick(D.tph_f4,idx)).toFixed(1)+'<br><span class="kutil-line">Util: '+uF4.toFixed(1)+'% · Meta 76%</span>';
+
+  const lbl=periodLabel();
+  document.getElementById('hrange').textContent=lbl;
+  document.getElementById('hdias').textContent=idx.length+' días con producción';
+}
+
+function rebuildAll(){
+  updateKPIs();
+  buildMain();
+  buildCeramico();
+  buildAgua();
+  buildComp();
+}
+
+rebuildAll();
+
+
+// Corrección navegación: evita cualquier acción por defecto o descarga accidental al tocar pestañas/filtros.
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const onclick = tab.getAttribute('onclick') || '';
+      const match = onclick.match(/showTab\('([^']+)'/);
+      if(match && window.showTab){ window.showTab(match[1], tab); }
+      return false;
+    }, true);
+  });
+  document.querySelectorAll('.controls .btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const onclick = btn.getAttribute('onclick') || '';
+      const match = onclick.match(/setF\('([^']+)'/);
+      if(match && window.setF){ window.setF(match[1], btn); }
+      return false;
+    }, true);
+  });
+});
+</script>
+
+<script>
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxFW0BF4bNUDd_U1O0gZGVTaNJepc0gR5CN1_uJ_PEBgno1IMiD9BAXl89EMmZjlZ7jw5b-oEkYYAK/pub?output=csv";
+
+async function cargarDatosGoogleSheet() {
+    try {
+        const url = GOOGLE_SHEET_URL + (GOOGLE_SHEET_URL.includes('?') ? '&' : '?') + 'cacheBust=' + Date.now();
+        const response = await fetch(url, { cache: 'no-store' });
+        if(!response.ok) throw new Error('HTTP ' + response.status);
+        const csvText = await response.text();
+
+        const parsed = Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false
+        });
+
+        if(parsed.errors && parsed.errors.length){
+          console.warn('Advertencias CSV:', parsed.errors);
+        }
+        if(!parsed.data || !parsed.data.length){
+          throw new Error('CSV sin filas útiles');
+        }
+
+        console.log('Google Sheets conectado correctamente:', parsed.data.length, 'filas');
+        window.googleSheetData = parsed.data;
+        buildDataFromRows(parsed.data);
+        hideErr();
+    } catch(error) {
+        console.error('Error cargando Google Sheets:', error);
+        showErr('⚠ No se pudo actualizar desde Google Sheets. Se muestran datos de respaldo internos.<br><small>'+error.message+'</small>');
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    rebuildMonthIndex();
+    refreshOperationalButton();
+    cargarDatosGoogleSheet();
+});
+</script>
+
+</body>
+</html>
