@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Escalera de Canchas | Dashboard Operacional</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#061015; --panel:#0b1b22; --panel2:#102a32; --panel3:#0f2229;
+  --line:#1d3c46; --text:#eef9f8; --muted:#8da7ab; --soft:#c8f7f0;
+  --green:#21d07a; --green2:#0ea864; --yellow:#ffd166; --orange:#fb923c;
+  --red:#ff4d5f; --blue:#38bdf8; --cyan:#67e8f9; --purple:#a78bfa;
+  --shadow:0 22px 70px rgba(0,0,0,.38); --radius:22px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at 10% 0%,#143942 0,#061015 42%,#020607 100%);color:var(--text)}
+.app{max-width:1450px;margin:auto;padding:24px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;position:sticky;top:0;z-index:20;padding:10px 0;background:linear-gradient(180deg,rgba(6,16,21,.98),rgba(6,16,21,.78),rgba(6,16,21,0));backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--blue));display:grid;place-items:center;font-weight:1000;color:#031015;box-shadow:0 12px 32px rgba(33,208,122,.18)}
+.brand h3{margin:0;font-size:15px;letter-spacing:.5px}.brand span{display:block;color:var(--muted);font-size:11px;margin-top:2px}.sync{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.sync-pill{font-size:12px;padding:9px 11px;border-radius:999px;border:1px solid rgba(103,232,249,.22);background:rgba(103,232,249,.08);color:#bff8ff;font-weight:800}.btn{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);color:var(--text);padding:10px 13px;border-radius:14px;font-weight:900;cursor:pointer}.btn:hover{background:rgba(255,255,255,.1)}
+.hero{display:grid;grid-template-columns:1.4fr .8fr;gap:16px;margin-bottom:16px}.heroCard{background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.11);box-shadow:var(--shadow);border-radius:28px;padding:24px;position:relative;overflow:hidden}.heroCard:after{content:"";position:absolute;right:-90px;top:-120px;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle,rgba(33,208,122,.22),rgba(56,189,248,.08),transparent 70%)}
+.badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid rgba(33,208,122,.25);border-radius:999px;background:rgba(33,208,122,.09);color:#a9f5c9;font-weight:900;font-size:12px;position:relative;z-index:1}h1{font-size:clamp(32px,4.5vw,62px);line-height:.95;margin:14px 0 12px;font-weight:1000;letter-spacing:-2.4px;position:relative;z-index:1}.subtitle{max-width:890px;color:var(--muted);font-size:15.5px;line-height:1.5;position:relative;z-index:1}.miniPanel{display:grid;grid-template-columns:1fr;gap:12px}.rule{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:15px}.rule b{display:block;font-size:13px;margin-bottom:5px}.rule span{font-size:12px;color:var(--muted);line-height:1.35}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px}.card{background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.10);box-shadow:var(--shadow);border-radius:var(--radius);padding:17px}.kpi-title{color:var(--muted);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.75px}.kpi-value{font-size:32px;font-weight:1000;margin-top:8px}.kpi-foot{font-size:12px;color:var(--muted);margin-top:5px}.ok{color:var(--green)}.warn{color:var(--yellow)}.bad{color:var(--red)}.blue{color:var(--blue)}
+.grid{display:grid;grid-template-columns:1.55fr .95fr;gap:16px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.section-title h2{font-size:18px;margin:0}.pill{font-size:12px;padding:7px 10px;border-radius:999px;background:rgba(33,208,122,.13);color:#8af0ba;font-weight:900;border:1px solid rgba(33,208,122,.22)}.chartBox{height:420px}.alertBox{margin-top:12px;padding:13px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);font-size:13px;color:var(--muted)}
+.pipeline{display:flex;flex-direction:column;gap:11px;margin-top:8px;max-height:420px;overflow:auto;padding-right:3px}.row{display:grid;grid-template-columns:92px 1fr 88px;gap:10px;align-items:center}.cancha{font-weight:1000;font-size:13px}.track{height:32px;border-radius:999px;background:rgba(255,255,255,.07);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}.bar{height:100%;position:absolute;border-radius:999px;min-width:7%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:1000;color:#041014;white-space:nowrap}.b-ready{background:linear-gradient(90deg,#21d07a,#67e8f9)}.b-load{background:linear-gradient(90deg,#38bdf8,#2563eb);color:#eafaff}.b-prep{background:linear-gradient(90deg,#fb923c,#ffd166)}.b-dry{background:linear-gradient(90deg,#facc15,#21d07a)}.b-stop{background:linear-gradient(90deg,#ff4d5f,#fb923c);color:#fff}.state{text-align:right;font-size:11px;font-weight:1000;color:var(--muted)}
+.legend{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px;color:var(--muted);font-size:12px}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}.d1{background:var(--green)}.d2{background:var(--yellow)}.d3{background:var(--blue)}.d4{background:var(--red)}
+.tableWrap{margin-top:16px}.table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.55px}td:last-child{text-align:right;font-weight:1000}.status{padding:6px 9px;border-radius:999px;font-size:12px}.s-ok{background:rgba(33,208,122,.13);color:#79efad}.s-warn{background:rgba(255,209,102,.13);color:#ffe09a}.s-bad{background:rgba(255,77,95,.13);color:#ff9aa5}.s-blue{background:rgba(56,189,248,.13);color:#9be8ff}
+.loader{padding:22px;border:1px dashed rgba(103,232,249,.25);border-radius:18px;color:var(--muted);text-align:center}.footer{margin:18px 0 4px;color:#789094;font-size:12px;text-align:right}.watermark{font-weight:1000;color:#d9fffb}.hidden{display:none!important}
+@media(max-width:1050px){.hero,.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.chartBox{height:360px}.topbar{position:relative}.row{grid-template-columns:82px 1fr 72px}.app{padding:14px}}@media(max-width:560px){.kpis{grid-template-columns:1fr}h1{font-size:36px}.heroCard{padding:18px}.sync{justify-content:flex-start}.topbar{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="logo">DLC</div><div><h3>Dashboard Construcción Muro</h3><span>Escalera de canchas listas para cargar</span></div></div>
+    <div class="sync"><span class="sync-pill" id="syncState">Sincronizando Google Sheets...</span><button class="btn" onclick="loadData(true)">Actualizar</button></div>
+  </div>
+  <div class="hero">
+    <div class="heroCard"><span class="badge">⚡ Continuidad operacional</span><h1>Escalera de<br>disponibilidad</h1><div class="subtitle">Lee el programa publicado en Google Sheets y calcula cuántas canchas quedan disponibles por día. Para esta lógica, una cancha cuenta como disponible cuando está Aprobada, En Carga o En Espera. El objetivo es no caer a cero y mantener continuidad operacional.</div></div>
+    <div class="miniPanel">
+      <div class="rule"><b>🟢 2 o más canchas disponibles</b><span>Continuidad segura: existen canchas aprobadas, en carga o en espera.</span></div>
+      <div class="rule"><b>🟡 1 cancha disponible</b><span>Condición justa: hay continuidad, pero con poca holgura operacional.</span></div>
+      <div class="rule"><b>🔴 0 canchas listas</b><span>Riesgo: no habría cancha aprobada disponible para sostener carga.</span></div>
+    </div>
+  </div>
+  <div id="loader" class="loader">Cargando información desde Google Sheets...</div>
+  <div id="dashboard" class="hidden">
+    <div class="kpis">
+      <div class="card"><div class="kpi-title">Canchas disponibles hoy</div><div class="kpi-value" id="kpiToday">-</div><div class="kpi-foot">Según última fecha cargada</div></div>
+      <div class="card"><div class="kpi-title">Estado operacional</div><div class="kpi-value" id="kpiState">-</div><div class="kpi-foot" id="kpiStateFoot">Meta mínima: 1 cancha</div></div>
+      <div class="card"><div class="kpi-title">Máximo colchón</div><div class="kpi-value blue" id="kpiMax">-</div><div class="kpi-foot">Mayor disponibilidad diaria</div></div>
+      <div class="card"><div class="kpi-title">Días en riesgo</div><div class="kpi-value" id="kpiRisk">-</div><div class="kpi-foot">Días con 0 canchas listas</div></div>
+      <div class="card"><div class="kpi-title">Próxima lista</div><div class="kpi-value" id="kpiNext">-</div><div class="kpi-foot" id="kpiNextFoot">Cancha / fecha</div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="section-title"><h2>Escalera de canchas listas</h2><span class="pill">Meta ≥ 1</span></div><div class="chartBox"><canvas id="stepChart"></canvas></div><div class="alertBox" id="insight">Analizando continuidad operacional...</div></div>
+      <div class="card"><div class="section-title"><h2>Pipeline por cancha</h2><span class="pill" id="rangePill">Programa</span></div><div class="pipeline" id="pipeline"></div><div class="legend"><span><i class="dot d1"></i>Disponible: aprobada/carga/espera</span><span><i class="dot d2"></i>Secado/preparación</span><span><i class="dot d3"></i>Carga</span><span><i class="dot d4"></i>Riesgo/atraso</span></div></div>
+    </div>
+    <div class="card tableWrap"><div class="section-title"><h2>Detalle diario de disponibilidad</h2><span class="pill">Lectura CSV</span></div><table class="table"><thead><tr><th>Fecha</th><th>Canchas disponibles</th><th>Canchas en carga</th><th>Estados relevantes</th><th>Condición</th></tr></thead><tbody id="dailyTable"></tbody></table></div>
+  </div>
+  <div class="footer">Design & Developed <span class="watermark">Mirko Malbrán J.</span></div>
+</div>
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSB7dBOxJnudn7T2u5W_Lzwj8IY-4fwWmPHsUW2zTEtSNZh5F3Upmt-2dTKo66Mk90M6OjPj8HwJaRi/pub?gid=1645261907&single=true&output=csv';
+let chart;
+function normalize(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}
+function parseCSV(text){const rows=[];let row=[],val='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){val+='"';i++}else q=!q}else if(c===','&&!q){row.push(val);val=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(val);if(row.some(x=>String(x).trim()!==''))rows.push(row);row=[];val=''}else val+=c}row.push(val);if(row.some(x=>String(x).trim()!==''))rows.push(row);return rows}
+function parseDate(v){if(!v)return null;let s=String(v).trim();let m=s.match(/(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?/);if(m){let d=+m[1],mo=+m[2]-1,y=m[3]?+m[3]:2026;if(y<100)y+=2000;let dt=new Date(y,mo,d);if(!isNaN(dt))return dt}let dt=new Date(s);return isNaN(dt)?null:dt}
+function fdate(d){return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function isDateHeader(h){const n=normalize(h);return ['fecha','dia','día','date'].some(x=>n.includes(normalize(x)))}
+function stateKind(v){const n=normalize(v); if(!n)return 'empty';
+ // Importante: "Carga Desmoche" NO es cancha disponible; es parte del ciclo de desmoche/secado.
+ if(/carga\s*desmoche|desmoche|secad|perfil|compact|prepar|humedad|reposo|extendido|rute|arado|rastreo|nivelacion|proctor/.test(n))return 'dry';
+ // Disponible operacional: aprobada, en carga normal o en espera.
+ if(/aprob|lista|listo|disponible|completad|liberada|ok humedad|humedad ok|\bespera\b|en espera/.test(n))return 'ready';
+ if(/\bcarga\b|cargando|relleno|deposit/.test(n))return 'load';
+ if(/rechaz|atras|deten|pendiente|sin dato|no aplica|sin prioridad/.test(n))return 'risk';
+ return 'other'}
+function canchaName(h,i){let s=String(h||'').trim();if(!s)return 'Cancha '+i;let m=s.match(/(?:cancha|zona)\s*([\w\-]+)/i);return m?('Cancha '+m[1]):s}
+function aggregateKind(kinds){
+ const priority={load:5,ready:4,dry:3,risk:2,other:1,empty:0};
+ let best='empty';
+ for(const k of kinds){ if((priority[k]||0)>(priority[best]||0)) best=k; }
+ return best;
+}
+function buildDataset(rows){
+ if(rows.length<2)return {days:[],canchas:[]};
+ const daysMap=new Map();
+ const canchaMap=new Map();
+ function add(fecha, cancha, estado){
+   const d=parseDate(fecha); if(!d||!cancha)return;
+   const st=String(estado||'').trim(); if(!st)return;
+   const key=d.toISOString().slice(0,10); const kind=stateKind(st);
+   if(kind==='empty')return;
+   if(!daysMap.has(key))daysMap.set(key,{date:d,raw:[]});
+   daysMap.get(key).raw.push({cancha,estado:st,kind});
+   if(!canchaMap.has(cancha))canchaMap.set(cancha,[]);
+   canchaMap.get(cancha).push({date:d,estado:st,kind});
+ }
+ // 1) Formato tipo calendario: fechas en columnas y canchas en filas.
+ let bestHeader=-1, bestDates=[];
+ for(let r=0;r<Math.min(12,rows.length);r++){
+   const dateCols=[];
+   rows[r].forEach((cell,i)=>{const d=parseDate(cell); if(d)dateCols.push({i,date:d});});
+   if(dateCols.length>bestDates.length){bestDates=dateCols; bestHeader=r;}
+ }
+ if(bestDates.length>=2){
+   let currentCancha='';
+   const firstDateCol=Math.min(...bestDates.map(x=>x.i));
+   for(let r=bestHeader+1;r<rows.length;r++){
+     const row=rows[r];
+     const before=row.slice(0,firstDateCol);
+     const found=before.concat(row).map(x=>String(x||'').trim()).find(x=>/\b(cancha|zona)\b/i.test(x));
+     if(found) currentCancha=found;
+     if(!currentCancha) continue;
+     bestDates.forEach(dc=>add(dc.date,currentCancha,row[dc.i]));
+   }
+ } else {
+   // 2) Formato base de datos: Fecha | Cancha | Estado.
+   let headerIndex=0; for(let r=0;r<Math.min(8,rows.length);r++){if(rows[r].some(c=>isDateHeader(c))){headerIndex=r;break}}
+   const headers=rows[headerIndex].map(x=>String(x).trim()); const dataRows=rows.slice(headerIndex+1);
+   const dateIdx=headers.findIndex(isDateHeader);
+   const canchaIdx=headers.findIndex(h=>/cancha|zona/i.test(h)&&!/\d/.test(h));
+   const estadoIdx=headers.findIndex(h=>/estado|actividad|programa|etapa/i.test(normalize(h)));
+   if(dateIdx>=0 && canchaIdx>=0 && estadoIdx>=0){dataRows.forEach(r=>add(r[dateIdx],r[canchaIdx],r[estadoIdx]));}
+   else if(dateIdx>=0){
+     const canchaCols=headers.map((h,i)=>({h,i})).filter(o=>o.i!==dateIdx && /cancha|zona|c\s*\d|z\s*\d|^\d+$|^[1-9]\d?/.test(normalize(o.h)));
+     const cols=canchaCols.length?canchaCols:headers.map((h,i)=>({h,i})).filter(o=>o.i!==dateIdx && String(o.h).trim());
+     dataRows.forEach(r=>{cols.forEach((o,idx)=>add(r[dateIdx],canchaName(o.h,idx+1),r[o.i]))});
+   }
+ }
+ const readySet=new Set();
+ const days=[...daysMap.values()].sort((a,b)=>a.date-b.date).map(day=>{
+   const byCancha={};
+   day.raw.forEach(it=>{ if(!byCancha[it.cancha])byCancha[it.cancha]=[]; byCancha[it.cancha].push(it); });
+   const items=Object.entries(byCancha).map(([cancha,arr])=>{
+     const kind=aggregateKind(arr.map(x=>x.kind));
+     const estado=arr.map(x=>x.estado).filter(Boolean).join(' / ');
+     return {cancha,estado,kind};
+   });
+   // Lógica corregida: Aprobada, En Carga y En Espera cuentan como cancha disponible.
+   // Secado, desmoche, compactación, perfilación, ruteo, arado y rastreo aún no cuentan como disponibles.
+   items.forEach(i=>{ if(i.kind==='dry'||i.kind==='risk') readySet.delete(i.cancha); });
+   items.forEach(i=>{ if(i.kind==='ready'||i.kind==='load') readySet.add(i.cancha); });
+   const load=items.filter(i=>i.kind==='load').length;
+   const dry=items.filter(i=>i.kind==='dry').length;
+   return {...day,items,ready:readySet.size,load,dry,key:day.date.toISOString().slice(0,10),label:fdate(day.date)};
+ });
+ const canchas=[...canchaMap.entries()].map(([name,arr])=>{
+   arr.sort((a,b)=>a.date-b.date); const latest=arr[arr.length-1]; const first=arr[0], last=arr[arr.length-1];
+   return {name,arr,first,last,latest,kind:latest.kind};
+ }).sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));
+ return {days,canchas};
+}
+function render(ds){document.getElementById('loader').classList.add('hidden');document.getElementById('dashboard').classList.remove('hidden');
+ const days=ds.days, canchas=ds.canchas; if(!days.length){document.getElementById('insight').innerHTML='No encontré fechas válidas en el CSV. Revisa que exista una columna Fecha/Día y columnas de Cancha o Estado.';return}
+ const today=days[days.length-1], max=Math.max(...days.map(d=>d.ready)), risks=days.filter(d=>d.ready===0).length; const next=days.find(d=>d.ready>0)||today;
+ kpiToday.textContent=today.ready; kpiToday.className='kpi-value '+(today.ready===0?'bad':today.ready===1?'warn':'ok');
+ kpiState.textContent=today.ready===0?'Riesgo':today.ready===1?'Justo':'Seguro'; kpiState.className='kpi-value '+(today.ready===0?'bad':today.ready===1?'warn':'ok');
+ kpiMax.textContent=max; kpiRisk.textContent=risks; kpiRisk.className='kpi-value '+(risks?'bad':'ok'); kpiNext.textContent=next.label; kpiNextFoot.textContent=(next.items.find(i=>i.kind==='ready')?.cancha||'Primera disponibilidad');
+ rangePill.textContent=days[0].label+' al '+days[days.length-1].label;
+ const insightText = risks?`⚠️ Se detectan ${risks} día(s) con 0 canchas disponibles. El punto crítico es evitar que la escalera toque cero, porque ahí se corta la continuidad de carga.`:`✅ El programa mantiene disponibilidad positiva durante todo el rango cargado. La continuidad operacional se ve controlada.`; insight.innerHTML=insightText;
+ const ctx=document.getElementById('stepChart'); if(chart)chart.destroy(); chart=new Chart(ctx,{type:'line',data:{labels:days.map(d=>d.label),datasets:[{label:'Canchas disponibles',data:days.map(d=>d.ready),stepped:true,tension:0,borderWidth:4,pointRadius:5,pointHoverRadius:8,fill:true},{label:'Meta mínima',data:days.map(_=>1),stepped:true,borderWidth:2,pointRadius:0,borderDash:[8,7],fill:false}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#dff7f5',font:{weight:'bold'}}},tooltip:{callbacks:{afterBody:(ctx)=>{const d=days[ctx[0].dataIndex];return ['En carga: '+d.load,'Secado/prep: '+d.dry]}}}},scales:{x:{ticks:{color:'#9db4b7'},grid:{color:'rgba(255,255,255,.05)'}},y:{beginAtZero:true,ticks:{color:'#9db4b7',precision:0,stepSize:1},grid:{color:'rgba(255,255,255,.08)'}}}}});
+ const start=days[0].date.getTime(), end=days[days.length-1].date.getTime(), span=Math.max(1,end-start); pipeline.innerHTML=canchas.map(c=>{const left=((c.first.date.getTime()-start)/span)*82; const width=Math.max(9,((c.last.date.getTime()-c.first.date.getTime())/span)*82+8); const cls=c.kind==='ready'?'b-ready':c.kind==='load'?'b-load':c.kind==='risk'?'b-stop':c.kind==='dry'?'b-dry':'b-prep'; const lab=c.kind==='ready'?'DISP.':c.kind==='load'?'CARGA':c.kind==='dry'?'SECADO':c.kind==='risk'?'RIESGO':'PROCESO'; return `<div class="row"><div class="cancha">${c.name}</div><div class="track"><div class="bar ${cls}" style="left:${left}%;width:${Math.min(96-left,width)}%">${lab}</div></div><div class="state">${fdate(c.latest.date)}</div></div>`}).join('')||'<div class="loader">No hay canchas detectadas.</div>';
+ dailyTable.innerHTML=days.map(d=>{const cond=d.ready===0?['Riesgo','s-bad']:d.ready===1?['Justo','s-warn']:['Seguro','s-ok']; const rel=d.items.filter(i=>i.kind!=='empty').slice(0,4).map(i=>`${i.cancha}: ${i.estado}`).join(' · '); return `<tr><td>${d.label}</td><td>${d.ready}</td><td>${d.load}</td><td>${rel||'-'}</td><td><span class="status ${cond[1]}">${cond[0]}</span></td></tr>`}).join('');}
+function gvizToRows(response){
+ const table=response.table||{};
+ const headers=(table.cols||[]).map(c=>c.label||c.id||'');
+ const rows=(table.rows||[]).map(r=>(r.c||[]).map(c=>{
+   if(!c)return '';
+   if(c.f!=null)return c.f;
+   if(c.v==null)return '';
+   return String(c.v);
+ }));
+ return [headers,...rows];
+}
+function loadViaGviz(){
+ return new Promise((resolve,reject)=>{
+   const cb='__gviz_cb_'+Date.now();
+   const timer=setTimeout(()=>{cleanup();reject(new Error('Timeout GViz'))},12000);
+   function cleanup(){clearTimeout(timer); delete window[cb]; if(script&&script.parentNode)script.parentNode.removeChild(script);}
+   window[cb]=data=>{cleanup(); try{resolve(gvizToRows(data));}catch(e){reject(e)}};
+   const script=document.createElement('script');
+   script.onerror=()=>{cleanup();reject(new Error('No cargó GViz'))};
+   script.src='https://docs.google.com/spreadsheets/d/e/2PACX-1vSB7dBOxJnudn7T2u5W_Lzwj8IY-4fwWmPHsUW2zTEtSNZh5F3Upmt-2dTKo66Mk90M6OjPj8HwJaRi/gviz/tq?gid=1645261907&tqx=responseHandler:'+cb+'&_cb='+Date.now();
+   document.body.appendChild(script);
+ });
+}
+async function loadData(force=false){
+ syncState.textContent='Sincronizando Google Sheets...'; syncState.style.color='#bff8ff'; loader.classList.remove('hidden'); loader.innerHTML='Cargando información desde Google Sheets...';
+ try{
+   let rows;
+   try{
+     const url=CSV_URL+(CSV_URL.includes('?')?'&':'?')+'_cb='+(force?Date.now():Math.floor(Date.now()/300000));
+     const res=await fetch(url,{cache:'no-store',mode:'cors'});
+     if(!res.ok)throw new Error('HTTP '+res.status);
+     rows=parseCSV(await res.text());
+   }catch(fetchErr){
+     // Fallback sin CORS: Google Visualization API por JSONP.
+     rows=await loadViaGviz();
+   }
+   const ds=buildDataset(rows);
+   syncState.textContent='Sincronizado: '+new Date().toLocaleString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+   syncState.style.color='#a9f5c9';
+   render(ds);
+ }catch(e){
+   loader.innerHTML='No se pudo leer la hoja publicada. Probé CSV y respaldo GViz/JSONP. Revisa que la hoja esté publicada para la web y que el gid sea correcto. Detalle: '+e.message;
+   syncState.textContent='Error de sincronización'; syncState.style.color='#ff9aa5';
+ }
+}
+loadData();
+</script>
+</body>
+</html>
